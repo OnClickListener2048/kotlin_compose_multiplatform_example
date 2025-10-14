@@ -16,7 +16,8 @@ junit = "4.13.2"
 kotlin = "2.2.20"
 kotlinx-coroutines = "1.10.2"
 ktor = "3.3.0"
-ktorClientAndroid = "3.3.0"
+ktorClientAndroid = "3.3.1"
+ktorVersion = "3.3.1"
 logback = "1.5.18"
 composeIcons = "1.1.1"
 voyagerVersion = "1.1.0-beta03"
@@ -36,8 +37,14 @@ androidx-lifecycle-viewmodelCompose = { module = "org.jetbrains.androidx.lifecyc
 androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
 ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktorClientAndroid" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktorVersion" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktorVersion" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorVersion" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktorClientAndroid" }
 ktor-client-java = { module = "io.ktor:ktor-client-java", version.ref = "ktorClientAndroid" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktorVersion" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktorVersion" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktorVersion" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 ktor-serverCore = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
 ktor-serverNetty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
