@@ -10,11 +10,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.currentCompositeKeyHash
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -33,15 +34,12 @@ class HomePage : Screen {
                 )
             }
         ) { paddingValues ->
-
-            val homeViewModel = remember { HomeViewModel() }
-            LaunchedEffect(Unit) {
-                homeViewModel.loadPosts()
+            val homeViewModel = rememberScreenModel {
+                HomeViewModel()
             }
 
             DisposableEffect(Unit) {
                 onDispose {
-                    homeViewModel.clear()
                 }
             }
             val currentOrThrow = LocalNavigator.currentOrThrow
@@ -65,6 +63,8 @@ class HomePage : Screen {
                 }
 
             }
+
+
 
         }
 

@@ -1,5 +1,6 @@
 package org.example.project.viewmodel
 
+import cafe.adriel.voyager.core.model.ScreenModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -12,12 +13,18 @@ import org.example.project.network.MainRepository
 import org.example.project.network.UiState
 import org.example.project.network.safeApiCall
 
-class HomeViewModel {
+class HomeViewModel : ScreenModel {
+
+
     private val repository = MainRepository()
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val _posts = MutableStateFlow<UiState<List<Post>>>(UiState.Loading)
     val posts: StateFlow<UiState<List<Post>>> = _posts
+
+    init {
+        loadPosts()
+    }
 
     fun loadPosts() {
         viewModelScope.launch {
@@ -26,7 +33,9 @@ class HomeViewModel {
         }
     }
 
-    fun clear() {
+    override fun onDispose() {
+        super.onDispose()
         viewModelScope.cancel()
     }
+
 }
