@@ -7,23 +7,22 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.example.project.bean.Post
 import org.example.project.network.MainRepository
+import org.example.project.network.UiState
+import org.example.project.network.safeApiCall
 
 class HomeViewModel {
     private val repository = MainRepository()
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    private val _posts = MutableStateFlow<String?>(null)
-    val posts: StateFlow<String?> = _posts
+    private val _posts = MutableStateFlow<UiState<List<Post>>>(UiState.Loading)
+    val posts: StateFlow<UiState<List<Post>>> = _posts
 
     fun loadPosts() {
         viewModelScope.launch {
-            try {
-                val data = repository.loadPosts()
-                _posts.value = data
-            } catch (e: Exception) {
-                _posts.value = "Error: ${e.message}"
-            }
+            _posts.value = UiState.Loading
+            _posts.value = safeApiCall { repository.loadPosts() }
         }
     }
 
