@@ -9,8 +9,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.currentCompositeKeyHash
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -22,8 +20,10 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import org.example.project.components.CommonTopAppBar
 import org.example.project.network.Render
 import org.example.project.viewmodel.HomeViewModel
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 class HomePage : Screen {
+    @Preview
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {

@@ -16,7 +16,7 @@ import org.example.project.network.safeApiCall
 class HomeViewModel : ScreenModel {
 
 
-    private val repository = MainRepository()
+    private val repository = MainRepository
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val _posts = MutableStateFlow<UiState<List<Post>>>(UiState.Loading)
