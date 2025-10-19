@@ -8,7 +8,10 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+    id("app.cash.sqldelight") version "2.1.0" apply false // 确保版本号统一且 apply false
 }
+
+
 
 kotlin {
     androidTarget {
@@ -45,9 +48,11 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.android)
             implementation(libs.ktor.client.okhttp)
+
         }
         appleMain.dependencies {
             implementation(libs.ktor.client.darwin)
+
         }
         commonMain.dependencies {
 
@@ -130,6 +135,8 @@ kotlin {
             implementation(libs.kotlin.test)
         }
         jvmMain.dependencies {
+            // JVM/Desktop 平台的数据库驱动
+            implementation(libs.sqlite.driver)
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
             implementation(libs.ktor.client.java)

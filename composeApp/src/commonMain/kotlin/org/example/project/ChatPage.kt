@@ -2,11 +2,16 @@ package org.example.project
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,9 +29,13 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -58,24 +67,30 @@ class ChatPage : Screen {
 
         val listState = rememberLazyListState()
         Scaffold(
-            topBar = { CommonTopAppBar(title = "Chat") },
+            modifier = Modifier.padding(WindowInsets.navigationBars.asPaddingValues())
+                .hideKeyboardOnTapOutside(),
+            topBar = { CommonTopAppBar(title = "Chat:DeepSeek-Chat") },
             bottomBar = { ChatBottomAppBar(chatViewModel, listState) }
         ) { paddingValues ->
             LazyColumn(
                 state = listState,
                 modifier = Modifier
                     .padding(paddingValues)
-                    .padding(10.dp),
+                    .padding(horizontal = 10.dp),
                 reverseLayout = false
             ) {
                 items(
                     chatList.size,
                     key = { chatList[it].id },
                     contentType = { chatList[it].type }) { index ->
-                    ChatItemView(chatList[index], chatViewModel)
                     Spacer(
                         modifier = Modifier.padding(vertical = 5.dp)
-                            .height(20.dp)
+                            .height(10.dp)
+                    )
+                    ChatItemView(chatList[index])
+                    Spacer(
+                        modifier = Modifier.padding(vertical = 5.dp)
+                            .height(10.dp)
                     )
                 }
             }
@@ -84,45 +99,32 @@ class ChatPage : Screen {
     }
 
     @Composable
-    fun ChatItemView(chatItem: ChatItem, chatViewModel: ChatViewModel) {
+    fun ChatItemView(chatItem: ChatItem) {
         println("ChatItemView---$chatItem")
-        if (chatItem.type == ChatItemType.Question) {
-            Row(
-                horizontalArrangement = Arrangement.End,
-                modifier = Modifier.fillMaxWidth()
+
+        Row(
+            horizontalArrangement = if (chatItem.type == ChatItemType.Question) Arrangement.End else Arrangement.Start,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (chatItem.isLoading) {
+                CircularProgressIndicator(Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(3.dp))
+            }
+            BoxWithConstraints(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = if (chatItem.type == ChatItemType.Question) Alignment.CenterEnd else Alignment.CenterStart
             ) {
                 Text(
                     text = chatItem.content,
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp)) // 设置圆角
-                        .widthIn(min = Dp.Unspecified)
-                        .fillMaxWidth(0.75f)
+                        .widthIn(min = Dp.Unspecified, max = maxWidth * 0.75f)
                         .background(Color.LightGray)   // 背景颜色
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     color = Color.Black,
                 ) // 内边距)
             }
-        } else if (chatItem.type == ChatItemType.Answer) {
-            Row(
-                horizontalArrangement = Arrangement.Start,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                if (chatItem.isLoading) {
-                    CircularProgressIndicator(Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(3.dp))
-                }
-                val answer by chatViewModel.answerFlow.collectAsStateWithLifecycle()
-                Text(
-                    text = if (chatItem.isLoading) answer else chatItem.content,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp)) // 设置圆角
-                        .widthIn(min = Dp.Unspecified)
-                        .fillMaxWidth(0.75f)
-                        .background(Color.LightGray) // 背景颜色
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                    color = Color.Black,
-                )
-            }
+
         }
     }
 
@@ -133,6 +135,7 @@ class ChatPage : Screen {
         val question by chatViewModel.question.collectAsStateWithLifecycle()
 
         val coroutineScope = rememberCoroutineScope()
+        val coroutineScopeList = rememberCoroutineScope()
 
         TextField(
             modifier = Modifier.fillMaxWidth(),
@@ -163,8 +166,13 @@ class ChatPage : Screen {
                     modifier = Modifier.clickable {
                         println("Send")
                         coroutineScope.launch {
-                            chatViewModel.talk(question)
-                            listState.animateScrollToItem(chatViewModel.chatList.value.size)
+                            chatViewModel.talk(question) {
+                                coroutineScopeList.launch {
+                                    val items = chatViewModel.chatList.value
+                                    listState.animateScrollToItem(items.size)
+                                }
+                            }
+
                         }
 
                     }
@@ -173,4 +181,17 @@ class ChatPage : Screen {
             singleLine = true
         )
     }
+
+    @Composable
+    fun Modifier.hideKeyboardOnTapOutside(): Modifier {
+        val keyboardController = LocalSoftwareKeyboardController.current
+        val focusManager = LocalFocusManager.current
+        return pointerInput(Unit) {
+            detectTapGestures {
+                keyboardController?.hide()
+                focusManager.clearFocus()
+            }
+        }
+    }
 }
+

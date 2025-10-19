@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 data class DeepRequest(
     var frequency_penalty: Int = 0,
     var logprobs: Boolean = false,
-    var max_tokens: Int = 4096,
+    var max_tokens: Int = 128,
     var messages: List<Message> = listOf(),
     var model: String = "deepseek-chat",
     var presence_penalty: Int = 0,

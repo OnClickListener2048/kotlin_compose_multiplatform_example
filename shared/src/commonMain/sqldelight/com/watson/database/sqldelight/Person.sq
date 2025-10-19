@@ -1,0 +1,20 @@
+-- 创建一个 Person 表
+CREATE TABLE Person (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    firstName TEXT NOT NULL,
+    lastName TEXT NOT NULL
+);
+
+-- 定义查询语句
+selectAll:
+SELECT * FROM Person ORDER BY lastName, firstName;
+
+selectById:
+SELECT * FROM Person WHERE id = ?;
+
+-- 定义插入语句 (使用命名参数更清晰)
+insert:
+INSERT INTO Person(firstName, lastName) VALUES (:firstName, :lastName);
+
+deleteById:
+DELETE FROM Person WHERE id = ?;

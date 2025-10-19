@@ -5,7 +5,15 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.androidLibrary)
+    id("app.cash.sqldelight") version "2.1.0"
+}
 
+sqldelight {
+    databases {
+        create("WatsonDatabase") {
+            packageName.set("com.watson.database")
+        }
+    }
 }
 
 kotlin {
@@ -53,15 +61,27 @@ kotlin {
 
             // 日志插件，方便调试
             implementation(libs.ktor.client.logging)
+
+            // SQLDelight 运行时库
+            implementation(libs.runtime)
+            // Coroutines 扩展，强烈推荐，用于 Flow 支持
+            implementation(libs.coroutines.extensions)
+        }
+        jvmMain.dependencies {
+            // JVM/Desktop 平台的数据库驱动
+            implementation(libs.sqlite.driver)
         }
         androidMain.dependencies {
             // 为 Android 添加 OkHttp 引擎
             implementation(libs.ktor.client.android)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.android.driver)
         }
         appleMain.dependencies {
             // put your Multiplatform dependencies here
             implementation(libs.ktor.client.darwin)
+            // iOS/Native 平台的数据库驱动
+            implementation(libs.native.driver)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

@@ -17,47 +17,46 @@ class ChatViewModel : ScreenModel {
 
     private val _chatList = MutableStateFlow(listOf<ChatItem>())
 
-    private val answer = MutableStateFlow("")
-     val answerFlow = answer.asStateFlow()
-
-    init {
-        repeat(10) {
-            val questionItem = ChatItem(
-                type = ChatItemType.Question,
-                content = "Question $it: What is the meaning of life?"
-            )
-            val answerItem = ChatItem(
-                type = ChatItemType.Answer,
-                content = "Answer $it: The meaning of life is a philosophical question."
-            )
-            _chatList.value = _chatList.value + questionItem + answerItem
-        }
-    }
-
     val chatList = _chatList.asStateFlow()
 
     fun updateQuestion(newQuestion: String) {
         _question.value = newQuestion
     }
 
-    suspend fun talk(question: String) {
-        _chatList.value = _chatList.value + ChatItem(
+    suspend fun talk(question: String,onUpdating: (ChatItem) -> Unit) {
+        val questionItem = ChatItem(
             type = ChatItemType.Question,
             content = question
         )
-        val chatItem = ChatItem(
+        _chatList.value = _chatList.value + questionItem
+        onUpdating.invoke(questionItem)
+        var chatItem = ChatItem(
             type = ChatItemType.Answer,
             content = "",
-            isLoading = true
         )
         _chatList.value = _chatList.value + chatItem
+        chatItem = chatItem.copy(isLoading = true)
+        updateChatItem(chatItem)
         safeApiCall {
             repository.talk(question, onStop = {
-                chatItem.isLoading = false
+                chatItem = chatItem.copy(isLoading = false)
+                updateChatItem(chatItem)
             }, onResponse = { response: ChatResponse ->
                 println("ChatResponse---"+ response.choices?.get(0)?.delta?.content)
-                answer.value += response.choices?.get(0)?.delta?.content
+                chatItem = chatItem.copy(content = chatItem.content+response.choices?.get(0)?.delta?.content)
+                updateChatItem(chatItem)
+                onUpdating.invoke(chatItem)
             })
+        }
+    }
+
+    fun updateChatItem(updatedItem: ChatItem) {
+        _chatList.value = _chatList.value.map {
+            if (it.id == updatedItem.id) {
+                updatedItem
+            } else {
+                it
+            }
         }
     }
 
