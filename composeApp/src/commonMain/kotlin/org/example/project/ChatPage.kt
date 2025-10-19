@@ -108,7 +108,7 @@ class ChatPage : Screen {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (chatItem.isLoading) {
-                    CircularProgressIndicator(Modifier.size(16.dp).padding(5.dp))
+                    CircularProgressIndicator(Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(3.dp))
                 }
                 val answer by chatViewModel.answerFlow.collectAsStateWithLifecycle()

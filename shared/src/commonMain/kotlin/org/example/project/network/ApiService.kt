@@ -19,13 +19,13 @@ import io.ktor.http.contentType
 import io.ktor.http.headersOf
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.example.project.bean.ChatResponse
 import org.example.project.bean.Content
 import org.example.project.bean.DeepRequest
 import org.example.project.bean.Message
 import org.example.project.bean.Part
 import org.example.project.bean.Post
 import org.example.project.bean.TalkRequest
+import org.example.project.bean.chat.ChatResponse
 
 
 sealed class UiState<out T> {
@@ -46,11 +46,16 @@ suspend fun <T> safeApiCall(block: suspend () -> T): UiState<T> {
 
 class ApiService(private val client: HttpClient) {
 
+
+
     suspend fun getPosts(): List<Post> {
         return client.get("https://jsonplaceholder.typicode.com/posts").body()
     }
 
     suspend fun talk(content: String, onStop: () -> Unit, onResponse: (ChatResponse) -> Unit) {
+        val json = Json {
+            ignoreUnknownKeys = true
+        }
         client.sse(
             "https://api.deepseek.com/chat/completions",
             request = {
@@ -64,15 +69,17 @@ class ApiService(private val client: HttpClient) {
                     connectTimeoutMillis = 60000L
                     socketTimeoutMillis = 60000L
                 }
-            }
+            },
         ) {
             incoming.collect { event ->
-
+                println("event.data---"+event.data)
                 if (event.data == "[DONE]") {
                     onStop.invoke()
                     return@collect
                 } else {
-                    onResponse.invoke(Json.decodeFromString<ChatResponse>(event.data ?: ""))
+                    val data = event.data
+                    val chatResponse = json.decodeFromString<ChatResponse>(data ?: "")
+                    onResponse.invoke(chatResponse)
                 }
 
             }

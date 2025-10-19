@@ -1,8 +1,8 @@
-package org.example.project.bean
+package org.example.project.bean.chat
 
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Delta(
-    var content: String = ""
+    val content: String? = null
 )

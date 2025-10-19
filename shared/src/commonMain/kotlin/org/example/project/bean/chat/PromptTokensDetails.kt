@@ -1,8 +1,6 @@
-package org.example.project.bean
-
+package org.example.project.bean.chat
 import kotlinx.serialization.Serializable
-
 @Serializable
 data class PromptTokensDetails(
-    var cached_tokens: Int = 0
+    val cached_tokens: Int? = null
 )

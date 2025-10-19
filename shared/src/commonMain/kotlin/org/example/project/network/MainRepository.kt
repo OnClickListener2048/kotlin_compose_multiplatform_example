@@ -1,8 +1,8 @@
 package org.example.project.network
 
 import io.ktor.client.HttpClient
-import org.example.project.bean.ChatResponse
 import org.example.project.bean.Post
+import org.example.project.bean.chat.ChatResponse
 
 object MainRepository {
     private val api = ApiService(provideHttpClient())

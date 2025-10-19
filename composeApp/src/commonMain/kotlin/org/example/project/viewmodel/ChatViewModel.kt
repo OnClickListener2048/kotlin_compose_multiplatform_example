@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.example.project.bean.ChatItem
 import org.example.project.bean.ChatItemType
-import org.example.project.bean.ChatResponse
+import org.example.project.bean.chat.ChatResponse
 import org.example.project.network.MainRepository
 import org.example.project.network.safeApiCall
 
@@ -55,7 +55,8 @@ class ChatViewModel : ScreenModel {
             repository.talk(question, onStop = {
                 chatItem.isLoading = false
             }, onResponse = { response: ChatResponse ->
-                answer.value +=response.choices[0].delta.content
+                println("ChatResponse---"+ response.choices?.get(0)?.delta?.content)
+                answer.value += response.choices?.get(0)?.delta?.content
             })
         }
     }
