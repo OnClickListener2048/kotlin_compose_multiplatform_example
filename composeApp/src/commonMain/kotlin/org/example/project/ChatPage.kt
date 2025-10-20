@@ -53,16 +53,20 @@ import kotlinx.coroutines.launch
 import org.example.project.bean.ChatItem
 import org.example.project.bean.ChatItemType
 import org.example.project.components.CommonTopAppBar
+import org.example.project.network.MainRepository
 import org.example.project.viewmodel.ChatViewModel
+import org.koin.compose.koinInject
 
 class ChatPage : Screen {
+
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
         println("ChatPage---$this")
         val currentOrThrow = LocalNavigator.currentOrThrow
+        val viewModel: ChatViewModel = koinInject()
         val chatViewModel =
-            currentOrThrow.rememberNavigatorScreenModel { ChatViewModel() }
+            currentOrThrow.rememberNavigatorScreenModel { viewModel }
         val chatList by chatViewModel.chatList.collectAsStateWithLifecycle()
 
         val listState = rememberLazyListState()
@@ -129,7 +133,7 @@ class ChatPage : Screen {
     }
 
     @Composable
-    fun ChatBottomAppBar(chatViewModel: ChatViewModel = ChatViewModel(), listState: LazyListState) {
+    fun ChatBottomAppBar(chatViewModel: ChatViewModel = koinInject<ChatViewModel>(), listState: LazyListState) {
         println("ChatBottomAppBar---$chatViewModel")
 
         val question by chatViewModel.question.collectAsStateWithLifecycle()

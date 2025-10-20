@@ -46,16 +46,16 @@ suspend fun <T> safeApiCall(block: suspend () -> T): UiState<T> {
 
 class ApiService(private val client: HttpClient) {
 
-
+    val json = Json {
+        ignoreUnknownKeys = true
+    }
 
     suspend fun getPosts(): List<Post> {
         return client.get("https://jsonplaceholder.typicode.com/posts").body()
     }
 
     suspend fun talk(content: String, onStop: () -> Unit, onResponse: (ChatResponse) -> Unit) {
-        val json = Json {
-            ignoreUnknownKeys = true
-        }
+
         client.sse(
             "https://api.deepseek.com/chat/completions",
             request = {

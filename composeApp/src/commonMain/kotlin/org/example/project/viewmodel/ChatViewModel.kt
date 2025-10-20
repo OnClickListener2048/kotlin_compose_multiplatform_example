@@ -9,13 +9,16 @@ import org.example.project.bean.chat.ChatResponse
 import org.example.project.network.MainRepository
 import org.example.project.network.safeApiCall
 
-class ChatViewModel : ScreenModel {
-    private val repository = MainRepository
+class ChatViewModel(val repository: MainRepository) : ScreenModel {
 
     private val _question = MutableStateFlow("如何使用AI软件")
     val question = _question.asStateFlow()
 
     private val _chatList = MutableStateFlow(listOf<ChatItem>())
+
+    init {
+        _chatList.value = repository.searchAll().map { chatItem -> ChatItem(chatItem.id, chatItem.content, chatItem.type, chatItem.createdAt) }
+    }
 
     val chatList = _chatList.asStateFlow()
 
@@ -23,10 +26,16 @@ class ChatViewModel : ScreenModel {
         _question.value = newQuestion
     }
 
-    suspend fun talk(question: String,onUpdating: (ChatItem) -> Unit) {
+    suspend fun talk(question: String, onUpdating: (ChatItem) -> Unit) {
         val questionItem = ChatItem(
             type = ChatItemType.Question,
             content = question
+        )
+        repository.insertChatItem(
+            questionItem.id,
+            questionItem.type,
+            questionItem.content,
+            questionItem.createdAt
         )
         _chatList.value = _chatList.value + questionItem
         onUpdating.invoke(questionItem)
@@ -41,9 +50,16 @@ class ChatViewModel : ScreenModel {
             repository.talk(question, onStop = {
                 chatItem = chatItem.copy(isLoading = false)
                 updateChatItem(chatItem)
+                repository.insertChatItem(
+                    chatItem.id,
+                    chatItem.type,
+                    chatItem.content,
+                    chatItem.createdAt
+                )
             }, onResponse = { response: ChatResponse ->
-                println("ChatResponse---"+ response.choices?.get(0)?.delta?.content)
-                chatItem = chatItem.copy(content = chatItem.content+response.choices?.get(0)?.delta?.content)
+                println("ChatResponse---" + response.choices?.get(0)?.delta?.content)
+                chatItem =
+                    chatItem.copy(content = chatItem.content + response.choices?.get(0)?.delta?.content)
                 updateChatItem(chatItem)
                 onUpdating.invoke(chatItem)
             })

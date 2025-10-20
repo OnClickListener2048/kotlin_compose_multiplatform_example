@@ -1,0 +1,44 @@
+import org.example.project.bean.ChatItemType;
+
+-- ChatItem.sq
+
+CREATE TABLE ChatItem (
+    -- 主键，存储 UUID 字符串
+    id TEXT NOT NULL PRIMARY KEY,
+
+    -- 聊天内容
+    content TEXT NOT NULL,
+
+    -- 枚举类型，存储为 TEXT。
+    -- 我们将使用 ColumnAdapter 将其与 Kotlin 的 ChatItemType 枚举进行映射。
+    -- CHECK 约束保证了只有 'Question' 或 'Answer' 能被存入，防止数据污染。
+    type TEXT AS ChatItemType NOT NULL CHECK(type IN ('Question', 'Answer')),
+
+    -- 创建时间的时间戳
+    createdAt INTEGER NOT NULL
+);
+
+-- 增 (Create)
+insertItem:
+INSERT INTO ChatItem(id, content, type, createdAt)
+VALUES (:id, :content, :type, :createdAt);
+
+-- 查 (Read) - 查询所有，按时间排序
+selectAllOrderedByTime:
+SELECT * FROM ChatItem ORDER BY createdAt ASC;
+
+-- 查 (Read) - 根据ID查询单个
+selectById:
+SELECT * FROM ChatItem WHERE id = :id;
+
+-- 改 (Update) - 更新内容（例如，当回答是流式输出时）
+updateContentById:
+UPDATE ChatItem SET content = :content WHERE id = :id;
+
+-- 删 (Delete) - 删除单个
+deleteById:
+DELETE FROM ChatItem WHERE id = :id;
+
+-- 删 (Delete) - 清空所有聊天记录
+clearAll:
+DELETE FROM ChatItem;

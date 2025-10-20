@@ -21,6 +21,7 @@ import org.example.project.components.CommonTopAppBar
 import org.example.project.network.Render
 import org.example.project.viewmodel.HomeViewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.koin.compose.koinInject
 
 class HomePage : Screen {
     @Preview
@@ -34,8 +35,9 @@ class HomePage : Screen {
                 )
             }
         ) { paddingValues ->
+            val homeViewModelInject = koinInject<HomeViewModel>()
             val homeViewModel = rememberScreenModel {
-                HomeViewModel()
+                homeViewModelInject
             }
 
             DisposableEffect(Unit) {

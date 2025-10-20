@@ -40,7 +40,10 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
 
-
+            // Koin 核心库
+            implementation(libs.koin.core)
+            // Koin for Compose Multiplatform (提供 koinInject() 等)
+            implementation(libs.koin.compose)
             // Ktor 核心客户端
             implementation(libs.ktor.client.core)
 
@@ -76,6 +79,8 @@ kotlin {
             implementation(libs.ktor.client.android)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.android.driver)
+            // Koin Android specific helpers (e.g., for androidContext())
+            implementation(libs.koin.android)
         }
         appleMain.dependencies {
             // put your Multiplatform dependencies here

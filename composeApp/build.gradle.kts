@@ -48,14 +48,18 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.android)
             implementation(libs.ktor.client.okhttp)
-
+            // Koin Android specific helpers (e.g., for androidContext())
+            implementation(libs.koin.android)
         }
         appleMain.dependencies {
             implementation(libs.ktor.client.darwin)
 
         }
         commonMain.dependencies {
-
+            // Koin 核心库
+            implementation(libs.koin.core)
+            // Koin for Compose Multiplatform (提供 koinInject() 等)
+            implementation(libs.koin.compose)
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor3)
             implementation(compose.runtime)
