@@ -58,7 +58,7 @@ class HomePage : Screen {
                             modifier = Modifier
                                 .padding(horizontal = 8.dp)
                                 .clickable {
-                                    currentOrThrow.push(ListPage)
+                                    currentOrThrow.push(ListPage())
                                 }
                         )
                     }

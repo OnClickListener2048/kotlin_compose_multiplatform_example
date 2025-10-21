@@ -20,9 +20,8 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
-import kotlin.time.Clock
 
-object ListPage : Screen {
+class ListPage : Screen {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
@@ -42,6 +41,7 @@ object ListPage : Screen {
             }
 
         ) { paddingValues ->
+            val currentOrThrow = LocalNavigator.currentOrThrow
             LazyColumn(modifier = Modifier.padding(paddingValues)) {
                 items(100) {
                     ListItem(
@@ -61,7 +61,7 @@ object ListPage : Screen {
                         trailingContent = { Text("trailingContent #$it") },
                         modifier = Modifier.padding(5.dp)
                             .clickable {
-
+                                currentOrThrow.push(ChatPage())
                             }
                     )
 

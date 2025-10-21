@@ -12,6 +12,7 @@ class MainRepository(
 
     init {
         println("MainRepository init---$chatItemQueries")
+        println("MainRepository init---$api")
     }
 
     suspend fun loadPosts(): List<Post> {
