@@ -66,6 +66,11 @@ class ChatViewModel(val repository: MainRepository) : ScreenModel {
         }
     }
 
+    fun clearQuestion() {
+        _question.value = ""
+    }
+
+
     fun updateChatItem(updatedItem: ChatItem) {
         _chatList.value = _chatList.value.map {
             if (it.id == updatedItem.id) {

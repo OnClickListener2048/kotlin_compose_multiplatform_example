@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -27,6 +29,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -38,12 +41,14 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cafe.adriel.voyager.core.model.rememberNavigatorScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import compose.icons.FeatherIcons
+import compose.icons.feathericons.Activity
 import compose.icons.feathericons.Image
 import compose.icons.feathericons.Send
 import io.github.vinceglb.filekit.FileKit
@@ -53,7 +58,6 @@ import kotlinx.coroutines.launch
 import org.example.project.bean.ChatItem
 import org.example.project.bean.ChatItemType
 import org.example.project.components.CommonTopAppBar
-import org.example.project.network.MainRepository
 import org.example.project.viewmodel.ChatViewModel
 import org.koin.compose.koinInject
 
@@ -70,10 +74,30 @@ class ChatPage : Screen {
         val chatList by chatViewModel.chatList.collectAsStateWithLifecycle()
 
         val listState = rememberLazyListState()
+
+        LaunchedEffect(chatList.size) {
+            if (chatList.isNotEmpty()) {
+                listState.animateScrollToItem(chatList.lastIndex)
+            }
+        }
+
+
         Scaffold(
             modifier = Modifier.padding(WindowInsets.navigationBars.asPaddingValues())
                 .hideKeyboardOnTapOutside(),
-            topBar = { CommonTopAppBar(title = "Chat:DeepSeek-Chat") },
+            topBar = {
+                CommonTopAppBar(title = "Chat:DeepSeek-Chat", actions = {
+                    Icon(
+                        imageVector = FeatherIcons.Activity,
+                        contentDescription = "Activity",
+                        modifier = Modifier.clickable {
+                            println("Activity")
+                            currentOrThrow.push(ListPage())
+                        }
+                    )
+
+                })
+            },
             bottomBar = { ChatBottomAppBar(chatViewModel, listState) }
         ) { paddingValues ->
             LazyColumn(
@@ -89,12 +113,12 @@ class ChatPage : Screen {
                     contentType = { chatList[it].type }) { index ->
                     Spacer(
                         modifier = Modifier.padding(vertical = 5.dp)
-                            .height(10.dp)
+                            .height(5.dp)
                     )
                     ChatItemView(chatList[index])
                     Spacer(
                         modifier = Modifier.padding(vertical = 5.dp)
-                            .height(10.dp)
+                            .height(5.dp)
                     )
                 }
             }
@@ -110,37 +134,43 @@ class ChatPage : Screen {
             horizontalArrangement = if (chatItem.type == ChatItemType.Question) Arrangement.End else Arrangement.Start,
             modifier = Modifier.fillMaxWidth()
         ) {
-            if (chatItem.isLoading) {
-                CircularProgressIndicator(Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(3.dp))
-            }
+
             BoxWithConstraints(
-                modifier = Modifier.fillMaxWidth(),
                 contentAlignment = if (chatItem.type == ChatItemType.Question) Alignment.CenterEnd else Alignment.CenterStart
             ) {
-                Text(
-                    text = chatItem.content,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp)) // 设置圆角
-                        .widthIn(min = Dp.Unspecified, max = maxWidth * 0.75f)
-                        .background(Color.LightGray)   // 背景颜色
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                    color = Color.Black,
-                ) // 内边距)
+                SelectionContainer {
+                    Text(
+                        text = chatItem.content,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp)) // 设置圆角
+                            .widthIn(min = Dp.Unspecified, max = maxWidth * 0.75f)
+                            .background(Color.LightGray)   // 背景颜色
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        color = Color.Black,
+                        fontSize = 14.sp,
+                        lineHeight = 18.sp
+                    )
+                } // 内边距)
             }
-
+            if (chatItem.isLoading) {
+                Spacer(modifier = Modifier.width(3.dp))
+                CircularProgressIndicator(Modifier.size(16.dp))
+            }
         }
     }
 
     @Composable
-    fun ChatBottomAppBar(chatViewModel: ChatViewModel = koinInject<ChatViewModel>(), listState: LazyListState) {
+    fun ChatBottomAppBar(
+        chatViewModel: ChatViewModel = koinInject<ChatViewModel>(),
+        listState: LazyListState
+    ) {
         println("ChatBottomAppBar---$chatViewModel")
 
         val question by chatViewModel.question.collectAsStateWithLifecycle()
 
         val coroutineScope = rememberCoroutineScope()
         val coroutineScopeList = rememberCoroutineScope()
-
+        val focusManager = LocalFocusManager.current
         TextField(
             modifier = Modifier.fillMaxWidth(),
             value = question,
@@ -171,6 +201,8 @@ class ChatPage : Screen {
                         println("Send")
                         coroutineScope.launch {
                             chatViewModel.talk(question) {
+                                chatViewModel.clearQuestion()
+                                focusManager.clearFocus()
                                 coroutineScopeList.launch {
                                     val items = chatViewModel.chatList.value
                                     listState.animateScrollToItem(items.size)
@@ -197,5 +229,7 @@ class ChatPage : Screen {
             }
         }
     }
+
+
 }
 
