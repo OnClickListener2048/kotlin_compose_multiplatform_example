@@ -6,6 +6,7 @@ import com.watson.database.WatsonDatabase
 
 actual class DatabaseDriverFactory {
     actual fun createDriver(): SqlDriver {
-        return NativeSqliteDriver(WatsonDatabase.Schema, "app.db")
+        return NativeSqliteDriver(WatsonDatabase.Schema, "watson.db")
+//        throw NotImplementedError("Database driver is not implemented for iOS yet.")
     }
 }

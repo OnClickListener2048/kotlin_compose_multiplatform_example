@@ -25,11 +25,10 @@ val appModule = module {
 fun initKoin(appDeclaration: KoinAppDeclaration = {}) {
     println("initKoin")
     startKoin {
+        printLogger(Level.DEBUG)
         modules(sharedModule,appModule , platformModule())
         // 调用传入的平台特定配置
-        appDeclaration(
-            printLogger(Level.DEBUG)
-        )
+        appDeclaration()
         // 加载通用模块和平台模块
     }
 }

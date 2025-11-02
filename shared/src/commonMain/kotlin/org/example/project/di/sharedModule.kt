@@ -4,7 +4,10 @@ import org.example.project.database.Database
 import org.example.project.network.ApiService
 import org.example.project.network.MainRepository
 import org.example.project.network.provideHttpClient
+import org.koin.core.context.startKoin
+import org.koin.core.logger.Level
 import org.koin.core.module.Module
+import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.module
 
 // 1. 定义平台无关的模块
@@ -37,3 +40,13 @@ val sharedModule = module {
 expect fun platformModule(): Module
 
 // 3. 创建一个公共的初始化函数
+fun initKoin2(appDeclaration: KoinAppDeclaration = {}) {
+    println("initKoin")
+    startKoin {
+        printLogger(Level.DEBUG)
+        modules(sharedModule , platformModule())
+        // 调用传入的平台特定配置
+        appDeclaration()
+        // 加载通用模块和平台模块
+    }
+}

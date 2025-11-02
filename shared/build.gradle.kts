@@ -14,6 +14,7 @@ sqldelight {
             packageName.set("com.watson.database")
         }
     }
+    linkSqlite = true
 }
 
 kotlin {
@@ -22,12 +23,20 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
-    iosArm64()
-    iosSimulatorArm64()
-    
+
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "shared2"
+            isStatic = false
+            export("io.insert.koin:koin-core")
+        }
+    }
+
     jvm()
-    
+
     js {
         browser()
     }
@@ -70,6 +79,7 @@ kotlin {
             // Coroutines 扩展，强烈推荐，用于 Flow 支持
             implementation(libs.coroutines.extensions)
         }
+
         jvmMain.dependencies {
             // JVM/Desktop 平台的数据库驱动
             implementation(libs.sqlite.driver)
@@ -85,6 +95,9 @@ kotlin {
         appleMain.dependencies {
             // put your Multiplatform dependencies here
             implementation(libs.ktor.client.darwin)
+
+        }
+        nativeMain.dependencies {
             // iOS/Native 平台的数据库驱动
             implementation(libs.native.driver)
         }
