@@ -2,6 +2,7 @@ package org.example.project.di
 
 import org.example.project.viewmodel.ChatViewModel
 import org.example.project.viewmodel.HomeViewModel
+import org.example.project.viewmodel.ListPageViewModel
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
 import org.koin.dsl.KoinAppDeclaration
@@ -18,6 +19,11 @@ val appModule = module {
     factory {
         println("HomeViewModel")
         HomeViewModel(get())
+    }
+
+    factory {
+        println("ListPageViewModel")
+        ListPageViewModel(get())
     }
 
 }

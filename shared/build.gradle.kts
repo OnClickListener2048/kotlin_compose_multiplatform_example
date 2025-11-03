@@ -20,7 +20,7 @@ sqldelight {
 kotlin {
     androidTarget {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.JVM_17)
         }
     }
 
@@ -83,6 +83,7 @@ kotlin {
         jvmMain.dependencies {
             // JVM/Desktop 平台的数据库驱动
             implementation(libs.sqlite.driver)
+            implementation(libs.landscapist.coil3)
         }
         androidMain.dependencies {
             // 为 Android 添加 OkHttp 引擎
@@ -91,15 +92,17 @@ kotlin {
             implementation(libs.android.driver)
             // Koin Android specific helpers (e.g., for androidContext())
             implementation(libs.koin.android)
+            implementation(libs.landscapist.coil3)
         }
         appleMain.dependencies {
             // put your Multiplatform dependencies here
             implementation(libs.ktor.client.darwin)
-
+            implementation(libs.landscapist.coil3)
         }
         nativeMain.dependencies {
             // iOS/Native 平台的数据库驱动
             implementation(libs.native.driver)
+            implementation(libs.landscapist.coil3)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

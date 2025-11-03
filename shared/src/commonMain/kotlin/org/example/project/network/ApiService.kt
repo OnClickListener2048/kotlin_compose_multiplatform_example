@@ -9,22 +9,17 @@ import io.ktor.client.plugins.timeout
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
-import io.ktor.client.request.request
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
-import io.ktor.http.headersOf
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.example.project.bean.Content
 import org.example.project.bean.DeepRequest
+import org.example.project.bean.ImageItem
 import org.example.project.bean.Message
-import org.example.project.bean.Part
 import org.example.project.bean.Post
-import org.example.project.bean.TalkRequest
 import org.example.project.bean.chat.ChatResponse
 
 
@@ -72,7 +67,7 @@ class ApiService(private val client: HttpClient) {
             },
         ) {
             incoming.collect { event ->
-                println("event.data---"+event.data)
+                println("event.data---" + event.data)
                 if (event.data == "[DONE]") {
                     onStop.invoke()
                     return@collect
@@ -85,6 +80,15 @@ class ApiService(private val client: HttpClient) {
             }
 
         }
+    }
+
+    suspend fun getImages(page: Int = 1, limit: Int = 100): List<ImageItem> {
+        return client.get("https://picsum.photos/v2/list") {
+            url {
+                parameters.append("page", page.toString())
+                parameters.append("limit", limit.toString())
+            }
+        }.body()
     }
 
     suspend fun postData(): String {

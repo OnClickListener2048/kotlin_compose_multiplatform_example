@@ -1,4 +1,7 @@
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -16,7 +19,7 @@ plugins {
 kotlin {
     androidTarget {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.JVM_17)
         }
     }
     
@@ -51,6 +54,9 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             // Koin Android specific helpers (e.g., for androidContext())
             implementation(libs.koin.android)
+            implementation(libs.landscapist.coil3)
+
+
         }
         appleMain.dependencies {
             implementation(libs.ktor.client.darwin)
@@ -72,7 +78,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(projects.shared)
-
+            implementation(libs.landscapist.placeholder)
             implementation(libs.composeIcons.feather)
 
 

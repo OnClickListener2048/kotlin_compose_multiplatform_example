@@ -21,6 +21,7 @@ kotlinx-coroutines = "1.10.2"
 ktor = "3.3.0"
 ktorClientAndroid = "3.3.1"
 ktorVersion = "3.3.1"
+landscapistCoil3 = "2.6.1"
 logback = "1.5.18"
 composeIcons = "1.1.1"
 voyagerVersion = "1.1.0-beta03"
@@ -57,6 +58,8 @@ ktor-client-java = { module = "io.ktor:ktor-client-java", version.ref = "ktorCli
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktorVersion" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktorVersion" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktorVersion" }
+landscapist-coil3 = { module = "com.github.skydoves:landscapist-coil3", version.ref = "landscapistCoil3" }
+landscapist-placeholder = { module = "com.github.skydoves:landscapist-placeholder", version.ref = "landscapistCoil3" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 ktor-serverCore = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
 ktor-serverNetty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }

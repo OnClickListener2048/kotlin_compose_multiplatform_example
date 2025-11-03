@@ -2,8 +2,9 @@ package org.example.project.di
 
 import org.example.project.database.Database
 import org.example.project.network.ApiService
-import org.example.project.network.MainRepository
+import org.example.project.repo.MainRepository
 import org.example.project.network.provideHttpClient
+import org.example.project.repo.ListPageRepository
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
 import org.koin.core.module.Module
@@ -30,6 +31,10 @@ val sharedModule = module {
     single {
         println("MainRepository")
         MainRepository(get(),get())
+    }
+    single {
+        println("ListPageRepository")
+        ListPageRepository(get())
     }
 
 

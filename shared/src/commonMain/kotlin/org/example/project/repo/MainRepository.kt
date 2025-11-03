@@ -1,9 +1,10 @@
-package org.example.project.network
+package org.example.project.repo
 
 import com.watson.database.sqldelight.ChatItemQueries
 import org.example.project.bean.ChatItemType
 import org.example.project.bean.Post
 import org.example.project.bean.chat.ChatResponse
+import org.example.project.network.ApiService
 
 class MainRepository(
     private val api: ApiService,

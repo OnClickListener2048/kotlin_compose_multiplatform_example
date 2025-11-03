@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.example.project.bean.ChatItem
 import org.example.project.bean.ChatItemType
 import org.example.project.bean.chat.ChatResponse
-import org.example.project.network.MainRepository
+import org.example.project.repo.MainRepository
 import org.example.project.network.safeApiCall
 
 class ChatViewModel(val repository: MainRepository) : ScreenModel {
