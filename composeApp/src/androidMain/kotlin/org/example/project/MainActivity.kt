@@ -17,9 +17,13 @@ import coil3.util.DebugLogger
 import com.skydoves.landscapist.coil3.LocalCoilImageLoader
 import com.skydoves.landscapist.components.LocalImageComponent
 import com.skydoves.landscapist.components.imageComponent
-import com.skydoves.landscapist.crossfade.CrossfadePlugin
+import com.skydoves.landscapist.placeholder.placeholder.PlaceholderPlugin
 import com.skydoves.landscapist.placeholder.shimmer.Shimmer
 import com.skydoves.landscapist.placeholder.shimmer.ShimmerPlugin
+import com.skydoves.landscapist.placeholder.thumbnail.ThumbnailPlugin
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.FastForward
+import compose.icons.feathericons.Loader
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init
 import org.example.project.di.initKoin
@@ -43,9 +47,9 @@ class MainActivity : ComponentActivity() {
                     .maxSizePercent(0.2)
                     .build()
             }
-            .diskCachePolicy(CachePolicy.DISABLED)
+            .diskCachePolicy(CachePolicy.ENABLED)
             .networkCachePolicy(CachePolicy.ENABLED)
-            .memoryCachePolicy(CachePolicy.DISABLED)
+            .memoryCachePolicy(CachePolicy.ENABLED)
             .logger(DebugLogger())
             .build()
 
@@ -64,11 +68,14 @@ class MainActivity : ComponentActivity() {
             CompositionLocalProvider(LocalCoilImageLoader provides imageLoader) {
                 val component = imageComponent {
                     +ShimmerPlugin(
-                        Shimmer.Flash(
+                        Shimmer.Fade(
                             baseColor = Color.White,
                             highlightColor = Color.LightGray,
                         ),
                     )
+                    +ThumbnailPlugin()
+                    +PlaceholderPlugin.Failure(FeatherIcons.FastForward)
+                    +PlaceholderPlugin.Loading(FeatherIcons.Loader)
                 }
 
                 CompositionLocalProvider(LocalImageComponent provides component) {

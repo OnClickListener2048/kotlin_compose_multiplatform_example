@@ -12,8 +12,9 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 @Preview
 fun App() {
+
     MaterialTheme(colorScheme = MaterialTheme.colorScheme) {
-        Navigator(ChatPage()) { navigator ->
+        Navigator(ListPage()) { navigator ->
             SlideTransition(navigator)
         }
     }

@@ -1,10 +1,13 @@
 package org.example.project.network
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
@@ -12,12 +15,16 @@ import androidx.compose.ui.unit.dp
 fun <T> UiState<T>.Render(
     paddingValues: PaddingValues = PaddingValues(0.dp),
     onError: @Composable (String) -> Unit = {
-        Text("❌ $it", modifier = Modifier.padding(paddingValues))
+        Box(modifier = Modifier.fillMaxSize()) {
+            Text("❌ $it", modifier = Modifier.padding(paddingValues).align(Alignment.Center))
+        }
     },
     onLoading: @Composable () -> Unit = {
-        CircularProgressIndicator(
-             modifier = Modifier.padding(paddingValues)
-        )
+        Box(modifier = Modifier.fillMaxSize()) {
+            CircularProgressIndicator(
+                modifier = Modifier.padding(paddingValues).align(Alignment.Center)
+            )
+        }
     },
     onSuccess: @Composable (T) -> Unit,
 ) {
