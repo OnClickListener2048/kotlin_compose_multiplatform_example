@@ -5,7 +5,7 @@ import org.example.project.network.ApiService
 
 class ListPageRepository(private val apiService: ApiService) {
 
-    suspend fun getImages(): List<ImageItem> {
-        return apiService.getImages(limit = 30)
+    suspend fun getImages(page: Int = 1, limit: Int = 10): List<ImageItem> {
+        return apiService.getImages(page = page, limit = limit)
     }
 }

@@ -15,11 +15,32 @@ class ListPageViewModel(private val listPageRepository: ListPageRepository) : Sc
     private val _images = MutableStateFlow<UiState<List<ImageItem>>>(UiState.Loading)
     val images: StateFlow<UiState<List<ImageItem>>> = _images
 
+    var page: Int = 1
+
     init {
         println("init ListPageViewModel")
         screenModelScope.launch {
             _images.value = UiState.Loading
             _images.value = safeApiCall { listPageRepository.getImages() }
         }
+    }
+
+    suspend fun refresh() {
+        page = 1
+        val imageItems = listPageRepository.getImages(page)
+        _images.value = UiState.Success(imageItems)
+    }
+
+    suspend fun loadMoreImages() {
+        page += 1
+        val currentState = _images.value
+        val imageItems = listPageRepository.getImages(page)
+        val updatedList = when (currentState) {
+            is UiState.Success -> currentState.data + imageItems // 追加到旧数据后面
+            else -> imageItems // 如果不是 Success 状态，直接替换
+        }
+
+        _images.value = UiState.Success(updatedList)
+
     }
 }
