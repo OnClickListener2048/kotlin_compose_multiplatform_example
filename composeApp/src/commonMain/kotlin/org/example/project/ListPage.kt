@@ -20,6 +20,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -33,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
@@ -63,6 +65,7 @@ class ListPage : Screen {
         val pullToRefreshState = rememberPullToRefreshState()
         val coroutineScope = rememberCoroutineScope()
 
+        val enterAlwaysScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
         // 检测滚动到达底部
         val shouldLoadMore by remember {
             derivedStateOf {
@@ -92,7 +95,8 @@ class ListPage : Screen {
                     showNavIcon = true,
                     onNavClick = {
                         currentOrThrow.pop()
-                    }
+                    },
+                    topAppBarScrollBehavior = enterAlwaysScrollBehavior
                 )
             }
 
@@ -118,7 +122,8 @@ class ListPage : Screen {
                         columns = GridCells.Fixed(2),
                         contentPadding = PaddingValues(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.nestedScroll(enterAlwaysScrollBehavior.nestedScrollConnection)
                     ) {
                         items(it, key = { item -> item.id ?: 0 }) {
                             var imageSize by remember { mutableStateOf(IntSize.Zero) }

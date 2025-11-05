@@ -48,7 +48,8 @@ fun CommonTopAppBar(
         titleContentColor = MaterialTheme.colorScheme.onPrimary,
         navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
         actionIconContentColor = MaterialTheme.colorScheme.onPrimary
-    )
+    ),
+    topAppBarScrollBehavior: TopAppBarScrollBehavior? = null
 ) {
     CenterAlignedTopAppBar(
         title = {
@@ -69,6 +70,7 @@ fun CommonTopAppBar(
             }
         },
         actions = actions,
-        colors = colors
+        colors = colors,
+        scrollBehavior = topAppBarScrollBehavior
     )
 }
