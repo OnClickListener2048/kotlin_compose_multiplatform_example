@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import cafe.adriel.voyager.core.annotation.ExperimentalVoyagerApi
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.SlideTransition
+import org.example.project.ai.AIChatScreen
 import org.example.project.di.initKoin
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -14,7 +15,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 fun App() {
 
     MaterialTheme(colorScheme = MaterialTheme.colorScheme) {
-        Navigator(LoginPage()) { navigator ->
+        Navigator(AIChatScreen()) { navigator ->
             SlideTransition(navigator)
         }
     }

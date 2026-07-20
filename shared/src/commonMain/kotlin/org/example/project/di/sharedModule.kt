@@ -1,6 +1,7 @@
 package org.example.project.di
 
 import org.example.project.database.Database
+import org.example.project.network.provideHttpClient
 import org.example.project.repo.ChatRepository
 import org.example.project.repo.ApiKeyRepository
 import org.example.project.chat.OpenAICompatibleProvider
@@ -14,6 +15,11 @@ import org.koin.dsl.module
 
 val sharedModule = module {
     println("sharedModule")
+
+    single {
+        println("HttpClient")
+        provideHttpClient()
+    }
 
     single {
         println("Database")
