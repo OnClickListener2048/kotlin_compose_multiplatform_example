@@ -150,6 +150,17 @@ class AIChatViewModel(
         }
 
         val userMsg = chatRepository.insertMessage(conversationId, text, ChatItemType.Question)
+        val messages = _state.value.messages + userMsg
+        _state.value = _state.value.copy(
+            currentConversationId = conversationId,
+            inputText = "",
+            messages = messages
+        )
+        streamChat(conversationId, messages)
+    }
+
+    private fun streamChat(conversationId: String, messages: List<ChatItem>) {
+        val config = _state.value.activeConfig ?: return
         @OptIn(ExperimentalUuidApi::class, kotlin.time.ExperimentalTime::class)
         val assistantMsg = ChatItem(
             id = Uuid.random().toString(),
@@ -161,16 +172,14 @@ class AIChatViewModel(
         )
 
         _state.value = _state.value.copy(
-            currentConversationId = conversationId,
-            inputText = "",
-            messages = _state.value.messages + userMsg + assistantMsg,
+            messages = messages + assistantMsg,
             isStreaming = true
         )
 
         shouldStopStream = false
         streamJob = screenModelScope.launch {
             try {
-                val history = _state.value.messages
+                val history = messages
                     .filter { !it.isLoading && !it.content.startsWith("Error:") }
                     .map {
                     ChatMessage(role = if (it.type == ChatItemType.Question) "user" else "assistant", content = it.content)
@@ -185,13 +194,17 @@ class AIChatViewModel(
                             assistantMsg.content,
                             ChatItemType.Answer
                         )
-                        val title = generateTitle(text)
-                        chatRepository.updateConversationTitle(conversationId, title)
+                        if (chatRepository.getMessageCount(conversationId) <= 2) {
+                            val firstMsg = messages.firstOrNull { it.type == ChatItemType.Question }
+                            if (firstMsg != null) {
+                                val title = generateTitle(firstMsg.content)
+                                chatRepository.updateConversationTitle(conversationId, title)
+                            }
+                        }
                         _state.value = _state.value.copy(isStreaming = false)
                         loadConversations()
                     } else {
-                        val updatedContent = assistantMsg.content + chunk.content
-                        assistantMsg.content = updatedContent
+                        assistantMsg.content += chunk.content
                         assistantMsg.isLoading = false
                         updateMessageInState(assistantMsg)
                     }
@@ -232,11 +245,12 @@ class AIChatViewModel(
             chatRepository.deleteMessage(lastAssistant.id)
         }
 
+        val filteredMsgs = msgs.filter { it.id != lastAssistant?.id }
         _state.value = _state.value.copy(
-            messages = msgs.filter { it.id != lastAssistant?.id },
-            inputText = lastQuestion.content
+            messages = filteredMsgs,
+            isLoading = false
         )
-        sendMessage()
+        streamChat(convId, filteredMsgs)
     }
 
     fun continueGeneration() {
