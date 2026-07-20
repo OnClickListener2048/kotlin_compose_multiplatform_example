@@ -189,6 +189,7 @@ class AIChatViewModel(
                     if (shouldStopStream) return@collect
 
                     if (chunk.isDone) {
+                        println("AIChatVM: stream done, content=${assistantMsg.content.take(50)}")
                         chatRepository.insertMessage(
                             conversationId,
                             assistantMsg.content,
@@ -206,6 +207,7 @@ class AIChatViewModel(
                     } else {
                         assistantMsg.content += chunk.content
                         assistantMsg.isLoading = false
+                        println("AIChatVM: chunk='${chunk.content.take(30)}', total=${assistantMsg.content.length}")
                         updateMessageInState(assistantMsg)
                     }
                 }
@@ -283,7 +285,8 @@ class AIChatViewModel(
                             ChatMessage(role = if (it.type == ChatItemType.Question) "user" else "assistant", content = it.content)
                         } + ChatMessage(role = "user", content = "Please continue from where you left off.")
 
-                        chatProvider.chat(history, config).collect { chunk ->
+                println("AIChatVM: starting to collect chat flow, history size=${history.size}")
+                chatProvider.chat(history, config).collect { chunk ->
                             if (shouldStopStream) return@collect
                             if (chunk.isDone) {
                                 chatRepository.insertMessage(convId, assistantMsg.content, ChatItemType.Answer)
