@@ -105,7 +105,10 @@ class AIChatViewModel(
     }
 
     fun newConversation() {
-        val config = _state.value.activeConfig ?: return
+        val config = _state.value.activeConfig ?: run {
+            screenModelScope.launch { _toastEvents.emit("Please configure an API key first") }
+            return
+        }
         val provider = _state.value.activeProvider
         val conversation = chatRepository.createConversation(
             providerType = provider,
