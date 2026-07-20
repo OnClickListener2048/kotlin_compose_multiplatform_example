@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlin.time.Clock
 
 class OpenAICompatibleProvider(
     override val type: ProviderType,
@@ -41,8 +40,10 @@ class OpenAICompatibleProvider(
             top_p = config.topP
         )
 
+        val url = "${config.baseUrl}/chat/completions"
+        println("OpenAIProvider: starting SSE to $url")
         client.sse(
-            urlString = "${config.baseUrl}/chat/completions",
+            urlString = url,
             request = {
                 method = HttpMethod.Post
                 header("Authorization", "Bearer ${config.apiKey}")
@@ -56,9 +57,12 @@ class OpenAICompatibleProvider(
                 }
             }
         ) {
+            println("OpenAIProvider: SSE session opened")
             incoming.collect { event ->
+                println("OpenAIProvider: event data=${event.data?.take(80)}")
                 val data = event.data ?: return@collect
                 if (data == "[DONE]") {
+                    println("OpenAIProvider: received [DONE]")
                     emit(ChatStreamChunk(content = "", isDone = true))
                     return@collect
                 }
@@ -68,7 +72,9 @@ class OpenAICompatibleProvider(
                     val delta = choice?.delta
                     val content = delta?.content ?: ""
                     val finishReason = choice?.finish_reason
-
+                    if (content.isNotEmpty()) {
+                        println("OpenAIProvider: chunk='$content'")
+                    }
                     emit(
                         ChatStreamChunk(
                             content = content,
@@ -81,6 +87,7 @@ class OpenAICompatibleProvider(
                 }
             }
         }
+        println("OpenAIProvider: SSE completed")
     }
 
     override suspend fun chatSync(
