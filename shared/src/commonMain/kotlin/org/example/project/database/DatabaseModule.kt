@@ -10,18 +10,25 @@ import org.example.project.bean.ChatItemType
 import org.example.project.chat.ProviderType
 
 class Database(databaseDriverFactory: DatabaseDriverFactory) {
-    val watsonQueries: WatsonQueries = WatsonDatabase(
-        driver = databaseDriverFactory.createDriver(),
-        ChatItemAdapter = ChatItem.Adapter(
-            typeAdapter = chatItemTypeAdapter
-        ),
-        ConversationAdapter = Conversation.Adapter(
-            providerTypeAdapter = providerTypeAdapter
-        ),
-        ApiKeyAdapter = ApiKey.Adapter(
-            providerTypeAdapter = providerTypeAdapter
-        )
-    ).watsonQueries
+    val watsonQueries: WatsonQueries
+
+    init {
+        val driver = databaseDriverFactory.createDriver()
+        try {
+            WatsonDatabase.Schema.migrate(driver, 0, WatsonDatabase.Schema.version)
+        } catch (e: Exception) {
+            driver.execute(null, "DROP TABLE IF EXISTS ChatItem", 0)
+            driver.execute(null, "DROP TABLE IF EXISTS Conversation", 0)
+            driver.execute(null, "DROP TABLE IF EXISTS ApiKey", 0)
+            WatsonDatabase.Schema.create(driver)
+        }
+        watsonQueries = WatsonDatabase(
+            driver = driver,
+            ChatItemAdapter = ChatItem.Adapter(typeAdapter = chatItemTypeAdapter),
+            ConversationAdapter = Conversation.Adapter(providerTypeAdapter = providerTypeAdapter),
+            ApiKeyAdapter = ApiKey.Adapter(providerTypeAdapter = providerTypeAdapter)
+        ).watsonQueries
+    }
 }
 
 val chatItemTypeAdapter = object : ColumnAdapter<ChatItemType, String> {
