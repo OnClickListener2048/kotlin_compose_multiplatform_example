@@ -33,8 +33,7 @@ data class ChatScreenState(
     val isLoading: Boolean = false,
     val inputText: String = "",
     val activeProvider: ProviderType = ProviderType.OpenAI,
-    val activeConfig: ProviderConfig? = null,
-    val showSidebar: Boolean = true
+    val activeConfig: ProviderConfig? = null
 )
 
 class AIChatViewModel(

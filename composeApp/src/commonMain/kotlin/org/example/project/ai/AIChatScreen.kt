@@ -1,8 +1,5 @@
 package org.example.project.ai
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -29,23 +27,29 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,6 +61,7 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import kotlinx.coroutines.launch
 import org.example.project.bean.ChatItemType
 import org.example.project.repo.Conversation
 import org.example.project.viewmodel.AIChatViewModel
@@ -70,73 +75,95 @@ class AIChatScreen : Screen {
         val viewModel = koinInject<AIChatViewModel>()
         val state by viewModel.state.collectAsState()
         val navigator = LocalNavigator.currentOrThrow
+        val drawerState = rememberDrawerState(DrawerValue.Closed)
+        val scope = rememberCoroutineScope()
 
-        Row(modifier = Modifier.fillMaxSize()) {
-            AnimatedVisibility(
-                visible = state.showSidebar,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                ConversationSidebar(
-                    conversations = state.conversations.filter { !it.isArchived },
-                    currentId = state.currentConversationId,
-                    onSelect = { viewModel.selectConversation(it) },
-                    onNew = { viewModel.newConversation() },
-                    onDelete = { viewModel.deleteConversation(it) },
-                    onTogglePin = { viewModel.togglePin(it) },
-                    onToggleArchive = { viewModel.toggleArchive(it) },
-                    onSearch = { viewModel.searchConversations(it) },
-                    onSettings = { navigator.push(AISettingsScreen()) }
-                )
-            }
-
-            Box(
-                modifier = Modifier.fillMaxHeight().width(1.dp)
-                    .background(MaterialTheme.colorScheme.outlineVariant)
-            )
-
-            Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                TopAppBar(
-                    title = {
-                        val convId = state.currentConversationId
-                        val title = state.conversations.find { it.id == convId }?.title ?: "AI Assistant"
-                        Text(title, maxLines = 1)
-                    },
-                    actions = {
-                        val providerLabel = state.activeProvider.displayName
-                        Text(providerLabel, fontSize = 12.sp, modifier = Modifier.padding(end = 8.dp))
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                )
-
-                HorizontalDivider()
-
-                if (state.currentConversationId == null) {
-                    WelcomeScreen(
-                        onNewChat = { viewModel.newConversation() },
-                        providerName = state.activeProvider.displayName
-                    )
-                } else {
-                    ChatMessagesArea(
-                        messages = state.messages,
-                        isStreaming = state.isStreaming,
-                        modifier = Modifier.weight(1f)
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            drawerContent = {
+                ModalDrawerSheet(modifier = Modifier.width(300.dp)) {
+                    ConversationSidebar(
+                        conversations = state.conversations.filter { !it.isArchived },
+                        currentId = state.currentConversationId,
+                        onSelect = {
+                            viewModel.selectConversation(it)
+                            scope.launch { drawerState.close() }
+                        },
+                        onNew = {
+                            viewModel.newConversation()
+                            scope.launch { drawerState.close() }
+                        },
+                        onDelete = { viewModel.deleteConversation(it) },
+                        onTogglePin = { viewModel.togglePin(it) },
+                        onToggleArchive = { viewModel.toggleArchive(it) },
+                        onSearch = { viewModel.searchConversations(it) },
+                        onSettings = {
+                            scope.launch { drawerState.close() }
+                            navigator.push(AISettingsScreen())
+                        }
                     )
                 }
-
-                if (state.currentConversationId != null) {
-                    ChatInputBar(
-                        text = state.inputText,
-                        onTextChange = { viewModel.updateInputText(it) },
-                        onSend = { viewModel.sendMessage() },
-                        isStreaming = state.isStreaming,
-                        onStop = { viewModel.stopGeneration() },
-                        onRegenerate = { viewModel.regenerate() },
-                        onContinue = { viewModel.continueGeneration() },
-                        enabled = state.activeConfig != null
+            }
+        ) {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = {
+                            val convId = state.currentConversationId
+                            val title = state.conversations.find { it.id == convId }?.title
+                            Text(title ?: "AI Assistant", maxLines = 1)
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Text("\u2630", fontSize = 22.sp)
+                            }
+                        },
+                        actions = {
+                            Text(
+                                state.activeProvider.displayName,
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(end = 8.dp)
+                            )
+                            IconButton(onClick = { viewModel.newConversation() }) {
+                                Text("+", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        )
                     )
+                }
+            ) { padding ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                ) {
+                    if (state.currentConversationId == null) {
+                        WelcomeScreen(
+                            onNewChat = { viewModel.newConversation() },
+                            providerName = state.activeProvider.displayName
+                        )
+                    } else {
+                        ChatMessagesArea(
+                            messages = state.messages,
+                            isStreaming = state.isStreaming,
+                            modifier = Modifier.weight(1f)
+                        )
+                        HorizontalDivider()
+                        ChatInputBar(
+                            text = state.inputText,
+                            onTextChange = { viewModel.updateInputText(it) },
+                            onSend = { viewModel.sendMessage() },
+                            isStreaming = state.isStreaming,
+                            onStop = { viewModel.stopGeneration() },
+                            onRegenerate = { viewModel.regenerate() },
+                            onContinue = { viewModel.continueGeneration() },
+                            enabled = state.activeConfig != null,
+                            modifier = Modifier.navigationBarsPadding()
+                        )
+                    }
                 }
             }
         }
@@ -150,12 +177,16 @@ private fun WelcomeScreen(onNewChat: () -> Unit, providerName: String) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("AI Assistant", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+        Text("AI Assistant", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
-        Text("Powered by $providerName", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            "Powered by $providerName",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         Spacer(Modifier.height(24.dp))
         Button(onClick = onNewChat) {
-            Text("+ New Chat")
+            Text("New Chat")
         }
     }
 }
@@ -175,116 +206,108 @@ private fun ConversationSidebar(
     var searchQuery by remember { mutableStateOf("") }
     var showDeleteDialog by remember { mutableStateOf<String?>(null) }
 
-    Column(
-        modifier = Modifier.width(280.dp).fillMaxHeight()
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-    ) {
+    Column(modifier = Modifier.fillMaxHeight().padding(top = 16.dp)) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("Conversations", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Row {
-                TextButton(onClick = onNew) { Text("+") }
-                TextButton(onClick = onSettings) { Text("\u2699") }
+                IconButton(onClick = onNew) { Text("+", fontSize = 22.sp) }
+                IconButton(onClick = onSettings) { Text("\u2699", fontSize = 20.sp) }
             }
         }
 
         OutlinedTextField(
             value = searchQuery,
-            onValueChange = {
-                searchQuery = it
-                onSearch(it)
-            },
+            onValueChange = { searchQuery = it; onSearch(it) },
             placeholder = { Text("Search...") },
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
             singleLine = true
         )
 
-        Spacer(Modifier.height(8.dp))
-
-        val sorted = conversations.sortedWith(compareByDescending<Conversation> { it.isPinned }.thenByDescending { it.updatedAt })
+        val sorted = conversations.sortedWith(
+            compareByDescending<Conversation> { it.isPinned }
+                .thenByDescending { it.updatedAt }
+        )
 
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(sorted, key = { it.id }) { conv ->
                 val isSelected = conv.id == currentId
                 var showMenu by remember { mutableStateOf(false) }
-                Box {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                            .clickable { onSelect(conv.id) },
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected)
-                                MaterialTheme.colorScheme.primaryContainer
-                            else
-                                MaterialTheme.colorScheme.surface
-                        ),
-                        shape = RoundedCornerShape(8.dp)
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                        .clickable { onSelect(conv.id) },
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isSelected)
+                            MaterialTheme.colorScheme.primaryContainer
+                        else
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    ),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    if (conv.isPinned) {
-                                        Text("\uD83D\uDCCC ", fontSize = 12.sp)
-                                    }
-                                    Text(conv.title, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
-                                }
-                                Text(
-                                    "${conv.providerType.displayName}  ${conv.model}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (conv.isPinned) "\uD83D\uDCCC ${conv.title}" else conv.title,
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1
+                            )
+                            Text(
+                                "${conv.providerType.displayName}  ${conv.model}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Box {
+                            IconButton(onClick = { showMenu = true }) {
+                                Text("\u22EE", fontSize = 18.sp)
+                            }
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(if (conv.isPinned) "Unpin" else "Pin") },
+                                    onClick = { onTogglePin(conv.id); showMenu = false }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Archive") },
+                                    onClick = { onToggleArchive(conv.id); showMenu = false }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
+                                    onClick = { showMenu = false; showDeleteDialog = conv.id }
                                 )
                             }
-                            IconButton(onClick = { showMenu = true }) {
-                                Text("\u22EE", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                            }
                         }
-                    }
-
-                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                        DropdownMenuItem(
-                            text = { Text(if (conv.isPinned) "Unpin" else "Pin") },
-                            onClick = { onTogglePin(conv.id); showMenu = false }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Archive") },
-                            onClick = { onToggleArchive(conv.id); showMenu = false }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
-                            onClick = {
-                                showMenu = false
-                                showDeleteDialog = conv.id
-                            }
-                        )
                     }
                 }
             }
         }
-    }
 
-    if (showDeleteDialog != null) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = null },
-            title = { Text("Delete Conversation") },
-            text = { Text("This will permanently delete this conversation and all its messages.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    onDelete(showDeleteDialog!!)
-                    showDeleteDialog = null
-                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = null }) { Text("Cancel") }
-            }
-        )
+        if (showDeleteDialog != null) {
+            AlertDialog(
+                onDismissRequest = { showDeleteDialog = null },
+                title = { Text("Delete") },
+                text = { Text("Delete this conversation permanently?") },
+                confirmButton = {
+                    TextButton(onClick = { onDelete(showDeleteDialog!!); showDeleteDialog = null }) {
+                        Text("Delete", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteDialog = null }) { Text("Cancel") }
+                }
+            )
+        }
     }
 }
 
@@ -304,14 +327,12 @@ private fun ChatMessagesArea(
 
     LazyColumn(
         state = listState,
-        modifier = modifier.padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        item { Spacer(Modifier.height(8.dp)) }
-        items(messages, key = { it.id }) { msg ->
-            ChatBubble(msg)
-        }
-        item { Spacer(Modifier.height(8.dp)) }
+        item { Spacer(Modifier.height(4.dp)) }
+        items(messages, key = { it.id }) { msg -> ChatBubble(msg) }
+        item { Spacer(Modifier.height(4.dp)) }
     }
 }
 
@@ -325,19 +346,17 @@ private fun ChatBubble(msg: org.example.project.repo.ChatItem) {
     ) {
         if (!isQuestion) {
             Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
+                modifier = Modifier.size(28.dp).clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary),
                 contentAlignment = Alignment.Center
             ) {
-                Text("AI", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("A", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.width(8.dp))
         }
 
         Card(
-            modifier = Modifier.widthIn(max = 320.dp),
+            modifier = Modifier.widthIn(max = 280.dp),
             colors = CardDefaults.cardColors(
                 containerColor = if (isQuestion)
                     MaterialTheme.colorScheme.primaryContainer
@@ -345,26 +364,18 @@ private fun ChatBubble(msg: org.example.project.repo.ChatItem) {
                     MaterialTheme.colorScheme.surfaceVariant
             ),
             shape = RoundedCornerShape(
-                topStart = 16.dp,
-                topEnd = 16.dp,
-                bottomStart = if (isQuestion) 16.dp else 4.dp,
-                bottomEnd = if (isQuestion) 4.dp else 16.dp
+                topStart = 12.dp, topEnd = 12.dp,
+                bottomStart = if (isQuestion) 12.dp else 4.dp,
+                bottomEnd = if (isQuestion) 4.dp else 12.dp
             )
         ) {
-            Column(modifier = Modifier.padding(12.dp)) {
+            Column(modifier = Modifier.padding(10.dp)) {
                 SelectionContainer {
-                    Text(
-                        text = msg.content,
-                        style = MaterialTheme.typography.bodyMedium,
-                        lineHeight = 20.sp
-                    )
+                    Text(msg.content, style = MaterialTheme.typography.bodyMedium, lineHeight = 20.sp)
                 }
                 if (msg.isLoading) {
                     Spacer(Modifier.height(4.dp))
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(14.dp),
-                        strokeWidth = 2.dp
-                    )
+                    CircularProgressIndicator(modifier = Modifier.size(12.dp), strokeWidth = 2.dp)
                 }
             }
         }
@@ -372,13 +383,11 @@ private fun ChatBubble(msg: org.example.project.repo.ChatItem) {
         if (isQuestion) {
             Spacer(Modifier.width(8.dp))
             Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
+                modifier = Modifier.size(28.dp).clip(CircleShape)
                     .background(MaterialTheme.colorScheme.tertiary),
                 contentAlignment = Alignment.Center
             ) {
-                Text("U", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("U", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -393,9 +402,10 @@ private fun ChatInputBar(
     onStop: () -> Unit,
     onRegenerate: () -> Unit,
     onContinue: () -> Unit,
-    enabled: Boolean
+    enabled: Boolean,
+    modifier: Modifier = Modifier
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)) {
         if (isStreaming) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
@@ -405,27 +415,29 @@ private fun ChatInputBar(
             }
         } else {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth().padding(bottom = 2.dp),
+                horizontalArrangement = Arrangement.Center
             ) {
-                TextButton(onClick = onRegenerate) { Text("\u21BB Regenerate") }
-                TextButton(onClick = onContinue) { Text("\u25B6 Continue") }
+                TextButton(onClick = onRegenerate) { Text("\u21BB", fontSize = 14.sp) }
+                TextButton(onClick = onContinue) { Text("\u25B6", fontSize = 14.sp) }
             }
         }
 
         OutlinedTextField(
             value = text,
             onValueChange = onTextChange,
-            placeholder = { Text(if (enabled) "Type a message..." else "Configure API key first...") },
+            placeholder = { Text(if (enabled) "Message..." else "Set API key first") },
             enabled = enabled && !isStreaming,
             modifier = Modifier.fillMaxWidth(),
             trailingIcon = {
-                TextButton(onClick = onSend, enabled = enabled && text.isNotBlank() && !isStreaming) {
-                    Text("\u27A4 Send")
+                IconButton(
+                    onClick = onSend,
+                    enabled = enabled && text.isNotBlank() && !isStreaming
+                ) {
+                    Text("\u27A4", fontSize = 18.sp)
                 }
             },
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(20.dp),
             maxLines = 4
         )
     }
