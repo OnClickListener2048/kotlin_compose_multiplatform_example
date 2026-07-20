@@ -54,6 +54,13 @@ class AIChatViewModel(
     init {
         loadConversations()
         loadActiveConfig()
+        val conversations = _state.value.conversations
+        if (conversations.isNotEmpty()) {
+            val lastConv = conversations.maxByOrNull { it.updatedAt }
+            if (lastConv != null) {
+                selectConversation(lastConv.id)
+            }
+        }
     }
 
     fun loadConversations() {

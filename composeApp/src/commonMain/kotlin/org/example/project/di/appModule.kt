@@ -8,7 +8,7 @@ import org.koin.dsl.module
 
 val appModule = module {
     println("appModule")
-    factory {
+    single {
         println("AIChatViewModel")
         AIChatViewModel(get(), get(), get())
     }
