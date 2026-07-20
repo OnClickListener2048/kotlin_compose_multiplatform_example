@@ -170,7 +170,9 @@ class AIChatViewModel(
         shouldStopStream = false
         streamJob = screenModelScope.launch {
             try {
-                val history = _state.value.messages.filter { !it.isLoading }.map {
+                val history = _state.value.messages
+                    .filter { !it.isLoading && !it.content.startsWith("Error:") }
+                    .map {
                     ChatMessage(role = if (it.type == ChatItemType.Question) "user" else "assistant", content = it.content)
                 }
 
@@ -261,7 +263,9 @@ class AIChatViewModel(
                 shouldStopStream = false
                 streamJob = screenModelScope.launch {
                     try {
-                        val history = _state.value.messages.filter { !it.isLoading }.map {
+                        val history = _state.value.messages
+                            .filter { !it.isLoading && !it.content.startsWith("Error:") }
+                            .map {
                             ChatMessage(role = if (it.type == ChatItemType.Question) "user" else "assistant", content = it.content)
                         } + ChatMessage(role = "user", content = "Please continue from where you left off.")
 
