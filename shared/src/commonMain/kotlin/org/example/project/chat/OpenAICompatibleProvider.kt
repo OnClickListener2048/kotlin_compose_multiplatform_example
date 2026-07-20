@@ -22,10 +22,7 @@ class OpenAICompatibleProvider(
     private val client: HttpClient
 ) : ChatProvider {
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-    }
+    private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
     override suspend fun chat(
         messages: List<ChatMessage>,
@@ -40,10 +37,8 @@ class OpenAICompatibleProvider(
             top_p = config.topP
         )
 
-        val url = "${config.baseUrl}/chat/completions"
-        println("OpenAIProvider: starting SSE to $url")
         client.sse(
-            urlString = url,
+            urlString = "${config.baseUrl}/chat/completions",
             request = {
                 method = HttpMethod.Post
                 header("Authorization", "Bearer ${config.apiKey}")
@@ -57,37 +52,25 @@ class OpenAICompatibleProvider(
                 }
             }
         ) {
-            println("OpenAIProvider: SSE session opened")
             incoming.collect { event ->
-                println("OpenAIProvider: event data=${event.data?.take(80)}")
                 val data = event.data ?: return@collect
                 if (data == "[DONE]") {
-                    println("OpenAIProvider: received [DONE]")
                     emit(ChatStreamChunk(content = "", isDone = true))
                     return@collect
                 }
                 try {
                     val response = json.decodeFromString<OpenAIStreamResponse>(data)
-                    val choice = response.choices?.firstOrNull()
-                    val delta = choice?.delta
+                    val delta = response.choices?.firstOrNull()?.delta
                     val content = delta?.content ?: ""
-                    val finishReason = choice?.finish_reason
-                    if (content.isNotEmpty()) {
-                        println("OpenAIProvider: chunk='$content'")
-                    }
-                    emit(
-                        ChatStreamChunk(
-                            content = content,
-                            isDone = finishReason != null,
-                            finishReason = finishReason
-                        )
-                    )
-                } catch (e: Exception) {
-                    println("OpenAI SSE parse error: ${e.message}")
-                }
+                    val finishReason = response.choices?.firstOrNull()?.finish_reason
+                    emit(ChatStreamChunk(
+                        content = content,
+                        isDone = finishReason != null,
+                        finishReason = finishReason
+                    ))
+                } catch (_: Exception) { }
             }
         }
-        println("OpenAIProvider: SSE completed")
     }
 
     override suspend fun chatSync(
@@ -103,13 +86,11 @@ class OpenAICompatibleProvider(
                 temperature = config.temperature,
                 top_p = config.topP
             )
-
             val response = client.post("${config.baseUrl}/chat/completions") {
                 header("Authorization", "Bearer ${config.apiKey}")
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
-
             val body = response.bodyAsText()
             val result = json.decodeFromString<OpenAIResponse>(body)
             Result.success(result.choices?.firstOrNull()?.message?.content ?: "")
@@ -119,59 +100,11 @@ class OpenAICompatibleProvider(
     }
 }
 
-@Serializable
-data class OpenAIRequest(
-    val model: String,
-    val messages: List<OpenAIMessage>,
-    val stream: Boolean = true,
-    val max_tokens: Int = 4096,
-    val temperature: Float = 0.7f,
-    val top_p: Float = 1.0f
-)
-
-@Serializable
-data class OpenAIMessage(
-    val role: String,
-    val content: String
-)
-
-@Serializable
-data class OpenAIStreamResponse(
-    val choices: List<OpenAIStreamChoice>? = null,
-    val id: String? = null,
-    val model: String? = null
-)
-
-@Serializable
-data class OpenAIStreamChoice(
-    val delta: OpenAIDelta? = null,
-    val finish_reason: String? = null,
-    val index: Int? = null
-)
-
-@Serializable
-data class OpenAIDelta(
-    val content: String? = null,
-    val role: String? = null
-)
-
-@Serializable
-data class OpenAIResponse(
-    val choices: List<OpenAIResponseChoice>? = null,
-    val id: String? = null,
-    val model: String? = null,
-    val usage: OpenAIUsage? = null
-)
-
-@Serializable
-data class OpenAIResponseChoice(
-    val message: OpenAIMessage? = null,
-    val finish_reason: String? = null
-)
-
-@Serializable
-data class OpenAIUsage(
-    val prompt_tokens: Int = 0,
-    val completion_tokens: Int = 0,
-    val total_tokens: Int = 0
-)
+@Serializable data class OpenAIRequest(val model: String, val messages: List<OpenAIMessage>, val stream: Boolean = true, val max_tokens: Int = 4096, val temperature: Float = 0.7f, val top_p: Float = 1.0f)
+@Serializable data class OpenAIMessage(val role: String, val content: String)
+@Serializable data class OpenAIStreamResponse(val choices: List<OpenAIStreamChoice>? = null, val id: String? = null, val model: String? = null)
+@Serializable data class OpenAIStreamChoice(val delta: OpenAIDelta? = null, val finish_reason: String? = null, val index: Int? = null)
+@Serializable data class OpenAIDelta(val content: String? = null, val role: String? = null)
+@Serializable data class OpenAIResponse(val choices: List<OpenAIResponseChoice>? = null, val id: String? = null, val model: String? = null, val usage: OpenAIUsage? = null)
+@Serializable data class OpenAIResponseChoice(val message: OpenAIMessage? = null, val finish_reason: String? = null)
+@Serializable data class OpenAIUsage(val prompt_tokens: Int = 0, val completion_tokens: Int = 0, val total_tokens: Int = 0)
