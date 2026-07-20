@@ -75,14 +75,15 @@ class AIChatScreen : Screen {
     @Composable
     override fun Content() {
         val viewModel = koinInject<AIChatViewModel>()
-        val state by viewModel.state.collectAsState()
+        val vm = remember { viewModel }
+        val state by vm.state.collectAsState()
         val navigator = LocalNavigator.currentOrThrow
         val drawerState = rememberDrawerState(DrawerValue.Closed)
         val scope = rememberCoroutineScope()
         val snackbarHostState = remember { SnackbarHostState() }
 
         LaunchedEffect(Unit) {
-            viewModel.toastEvents.collect { message ->
+            vm.toastEvents.collect { message ->
                 snackbarHostState.showSnackbar(message)
             }
         }
@@ -95,17 +96,17 @@ class AIChatScreen : Screen {
                         conversations = state.conversations.filter { !it.isArchived },
                         currentId = state.currentConversationId,
                         onSelect = {
-                            viewModel.selectConversation(it)
+                            vm.selectConversation(it)
                             scope.launch { drawerState.close() }
                         },
                         onNew = {
-                            viewModel.newConversation()
+                            vm.newConversation()
                             scope.launch { drawerState.close() }
                         },
-                        onDelete = { viewModel.deleteConversation(it) },
-                        onTogglePin = { viewModel.togglePin(it) },
-                        onToggleArchive = { viewModel.toggleArchive(it) },
-                        onSearch = { viewModel.searchConversations(it) },
+                        onDelete = { vm.deleteConversation(it) },
+                        onTogglePin = { vm.togglePin(it) },
+                        onToggleArchive = { vm.toggleArchive(it) },
+                        onSearch = { vm.searchConversations(it) },
                         onSettings = {
                             scope.launch { drawerState.close() }
                             navigator.push(AISettingsScreen())
@@ -135,7 +136,7 @@ class AIChatScreen : Screen {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(end = 8.dp)
                             )
-                            IconButton(onClick = { viewModel.newConversation() }) {
+                            IconButton(onClick = { vm.newConversation() }) {
                                 Text("+", fontSize = 22.sp, fontWeight = FontWeight.Bold)
                             }
                         },
@@ -152,7 +153,7 @@ class AIChatScreen : Screen {
                 ) {
                     if (state.currentConversationId == null) {
                         WelcomeScreen(
-                            onNewChat = { viewModel.newConversation() },
+                            onNewChat = { vm.newConversation() },
                             providerName = state.activeProvider.displayName
                         )
                     } else {
@@ -164,12 +165,12 @@ class AIChatScreen : Screen {
                         HorizontalDivider()
                         ChatInputBar(
                             text = state.inputText,
-                            onTextChange = { viewModel.updateInputText(it) },
-                            onSend = { viewModel.sendMessage() },
+                            onTextChange = { vm.updateInputText(it) },
+                            onSend = { vm.sendMessage() },
                             isStreaming = state.isStreaming,
-                            onStop = { viewModel.stopGeneration() },
-                            onRegenerate = { viewModel.regenerate() },
-                            onContinue = { viewModel.continueGeneration() },
+                            onStop = { vm.stopGeneration() },
+                            onRegenerate = { vm.regenerate() },
+                            onContinue = { vm.continueGeneration() },
                             enabled = state.activeConfig != null,
                             modifier = Modifier.navigationBarsPadding()
                         )
