@@ -195,7 +195,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "org.example.project"
+            packageName = "ai.assistant.app"
             packageVersion = "1.0.0"
         }
     }

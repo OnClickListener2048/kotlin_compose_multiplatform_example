@@ -1,57 +1,53 @@
 package org.example.project.di
 
 import org.example.project.database.Database
-import org.example.project.network.ApiService
-import org.example.project.repo.MainRepository
-import org.example.project.network.provideHttpClient
-import org.example.project.repo.ListPageRepository
+import org.example.project.repo.ChatRepository
+import org.example.project.repo.ApiKeyRepository
+import org.example.project.chat.OpenAICompatibleProvider
+import org.example.project.chat.ChatProvider
+import org.example.project.chat.ProviderType
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
 import org.koin.core.module.Module
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.module
 
-// 1. 定义平台无关的模块
 val sharedModule = module {
-    // single { ... } 创建一个单例
     println("sharedModule")
-    single {
-        println("provideHttpClient")
-        provideHttpClient()
-    }
-    single {
-        println("ApiService")
-        ApiService(get())
-    }
-    // Database 依赖 DatabaseDriverFactory。Koin 会自动从 platformModule 中寻找并注入它。
+
     single {
         println("Database")
-        Database(get()).chatItemQueries
+        Database(get())
     }
+
     single {
-        println("MainRepository")
-        MainRepository(get(),get())
+        println("WatsonQueries")
+        get<Database>().watsonQueries
     }
+
     single {
-        println("ListPageRepository")
-        ListPageRepository(get())
+        println("ChatRepository")
+        ChatRepository(get())
     }
 
+    single {
+        println("ApiKeyRepository")
+        ApiKeyRepository(get())
+    }
 
-
+    single<ChatProvider> {
+        println("OpenAICompatibleProvider")
+        OpenAICompatibleProvider(ProviderType.OpenAI, get())
+    }
 }
 
-// 2. 期望一个平台特定的模块，这个模块将负责提供 DatabaseDriverFactory
 expect fun platformModule(): Module
 
-// 3. 创建一个公共的初始化函数
 fun initKoin2(appDeclaration: KoinAppDeclaration = {}) {
     println("initKoin")
     startKoin {
         printLogger(Level.DEBUG)
-        modules(sharedModule , platformModule())
-        // 调用传入的平台特定配置
+        modules(sharedModule, platformModule())
         appDeclaration()
-        // 加载通用模块和平台模块
     }
 }

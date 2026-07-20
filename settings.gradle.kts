@@ -1,4 +1,4 @@
-rootProject.name = "KotlinProject"
+rootProject.name = "AIAssistant"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
