@@ -29,9 +29,10 @@ import io.github.vinceglb.filekit.dialogs.init
 import org.example.project.di.initKoin
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
+import org.koin.core.component.KoinComponent
 import org.koin.core.logger.Level
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), KoinComponent{
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -57,6 +58,7 @@ class MainActivity : ComponentActivity() {
             // 可选：添加 Android 特定的 Koin 配置
             androidLogger(Level.DEBUG) // 使用 Koin 的日志记录
             androidContext(this@MainActivity)
+
         }
 
         FileKit.init(this)
@@ -87,7 +89,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+class Api
+class AuthService(private val api: Api) {
+    fun login() {  }
+}
+object MySdk {
+    private val api by lazy { Api() } // 手动管理依赖
 
+    val authService by lazy { AuthService(api) }
+}
 @Preview
 @Composable
 fun AppAndroidPreview() {

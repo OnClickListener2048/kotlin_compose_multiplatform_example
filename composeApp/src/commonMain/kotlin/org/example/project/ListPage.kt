@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -30,10 +29,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
@@ -43,6 +44,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.mxalbert.zoomable.OverZoomConfig
+import com.mxalbert.zoomable.Zoomable
+import com.mxalbert.zoomable.rememberZoomableState
 import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.coil3.CoilImage
 import com.skydoves.landscapist.components.LocalImageComponent
@@ -127,13 +131,22 @@ class ListPage : Screen {
                     ) {
                         items(it, key = { item -> item.id ?: 0 }) {
                             var imageSize by remember { mutableStateOf(IntSize.Zero) }
+                            var fadeOut by rememberSaveable { mutableStateOf(false) }
+                            var isOverlayVisible by rememberSaveable { mutableStateOf(true) }
+                            var overZoom by rememberSaveable { mutableStateOf(false) }
+                            val state = rememberZoomableState(
+                                minScale = if (overZoom) 0.5f else 1f,
+                                maxScale = if (overZoom) 6f else 4f,
+                                overZoomConfig = if (overZoom) OverZoomConfig(1f, 4f) else null
+                            )
                             OutlinedCard(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(12.dp))
-                                    .clickable(onClick = {}),
+                                    .clickable(onClick = { currentOrThrow.push(DetailPage(it)) }),
                                 elevation = CardDefaults.cardElevation(40.dp)
                             ) {
+
                                 CoilImage(
                                     modifier = Modifier.fillMaxWidth()
                                         .onSizeChanged { size ->
@@ -153,7 +166,11 @@ class ListPage : Screen {
                                     failure = {
                                         Text(text = "image request failed.")
                                     },
-                                    component = LocalImageComponent.current
+                                    component = LocalImageComponent.current,
+//                                    success = { state, painter ->
+//                                        println("Image loaded success: ${it.download_url}")
+//                                    }
+
 
                                 )
                                 Text(text = "${it.author}", modifier = Modifier.padding(8.dp))

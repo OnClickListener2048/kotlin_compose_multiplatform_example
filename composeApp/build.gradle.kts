@@ -35,7 +35,7 @@ kotlin {
     }
     
     jvm()
-    
+    /*
     js {
         browser()
         binaries.executable()
@@ -46,6 +46,7 @@ kotlin {
         browser()
         binaries.executable()
     }
+    */
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
@@ -136,11 +137,13 @@ kotlin {
             // 日志插件，方便调试
             implementation(libs.ktor.client.logging)
 
-
+            
             implementation(libs.filekit.core)
             implementation(libs.filekit.dialogs)
             implementation(libs.filekit.dialogs.compose)
             implementation(libs.filekit.coil)
+            implementation(libs.landscapist.coil3)
+            implementation(libs.zoomable)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

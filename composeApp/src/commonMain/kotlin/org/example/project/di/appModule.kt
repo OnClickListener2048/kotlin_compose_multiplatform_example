@@ -36,5 +36,8 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) {
         // 调用传入的平台特定配置
         appDeclaration()
         // 加载通用模块和平台模块
+        modules(
+
+        )
     }
 }
