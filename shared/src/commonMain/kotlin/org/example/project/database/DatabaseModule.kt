@@ -14,14 +14,7 @@ class Database(databaseDriverFactory: DatabaseDriverFactory) {
 
     init {
         val driver = databaseDriverFactory.createDriver()
-        try {
-            WatsonDatabase.Schema.migrate(driver, 0, WatsonDatabase.Schema.version)
-        } catch (e: Exception) {
-            driver.execute(null, "DROP TABLE IF EXISTS ChatItem", 0)
-            driver.execute(null, "DROP TABLE IF EXISTS Conversation", 0)
-            driver.execute(null, "DROP TABLE IF EXISTS ApiKey", 0)
-            WatsonDatabase.Schema.create(driver)
-        }
+        WatsonDatabase.Schema.create(driver)
         watsonQueries = WatsonDatabase(
             driver = driver,
             ChatItemAdapter = ChatItem.Adapter(typeAdapter = chatItemTypeAdapter),
