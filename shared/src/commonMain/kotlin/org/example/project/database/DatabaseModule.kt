@@ -10,18 +10,12 @@ import org.example.project.bean.ChatItemType
 import org.example.project.chat.ProviderType
 
 class Database(databaseDriverFactory: DatabaseDriverFactory) {
-    val watsonQueries: WatsonQueries
-
-    init {
-        val driver = databaseDriverFactory.createDriver()
-        WatsonDatabase.Schema.create(driver)
-        watsonQueries = WatsonDatabase(
-            driver = driver,
-            ChatItemAdapter = ChatItem.Adapter(typeAdapter = chatItemTypeAdapter),
-            ConversationAdapter = Conversation.Adapter(providerTypeAdapter = providerTypeAdapter),
-            ApiKeyAdapter = ApiKey.Adapter(providerTypeAdapter = providerTypeAdapter)
-        ).watsonQueries
-    }
+    val watsonQueries: WatsonQueries = WatsonDatabase(
+        driver = databaseDriverFactory.createDriver(),
+        ChatItemAdapter = ChatItem.Adapter(typeAdapter = chatItemTypeAdapter),
+        ConversationAdapter = Conversation.Adapter(providerTypeAdapter = providerTypeAdapter),
+        ApiKeyAdapter = ApiKey.Adapter(providerTypeAdapter = providerTypeAdapter)
+    ).watsonQueries
 }
 
 val chatItemTypeAdapter = object : ColumnAdapter<ChatItemType, String> {
