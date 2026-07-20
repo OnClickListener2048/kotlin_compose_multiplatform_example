@@ -75,7 +75,11 @@ class AIChatScreen : Screen {
     @Composable
     override fun Content() {
         val viewModel = koinInject<AIChatViewModel>()
-        val state by viewModel.state.collectAsState()
+        var state by remember { mutableStateOf(viewModel.state.value) }
+
+        LaunchedEffect(viewModel) {
+            viewModel.state.collect { state = it }
+        }
         val navigator = LocalNavigator.currentOrThrow
         val drawerState = rememberDrawerState(DrawerValue.Closed)
         val scope = rememberCoroutineScope()
