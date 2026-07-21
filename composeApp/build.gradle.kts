@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+    alias(libs.plugins.kover)
     id("app.cash.sqldelight") version "2.1.0" apply false // 确保版本号统一且 apply false
 }
 

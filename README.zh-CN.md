@@ -39,6 +39,11 @@ composeApp           # Compose Multiplatform 应用壳
 - [ ] 文件内容提取、OCR、Vision 与 RAG 索引
 - [ ] Knowledge、Tool/MCP、Agent 执行（V2）
 
+## 代码质量
+
+- Detekt 已应用到全部 Gradle 模块，统一配置位于 `config/detekt/detekt.yml`。
+- Kover 已应用到 `composeApp`，用于 JVM 覆盖率报告。当前架构迁移阶段不把 UT 作为交付阻塞项；补齐 JVM 测试后即可生成覆盖率报告。
+
 ## KMP 依赖原则
 
 - `commonMain` 仅使用 Kotlin Multiplatform 可用的库和接口。

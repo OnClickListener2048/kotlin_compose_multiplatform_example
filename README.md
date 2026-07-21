@@ -39,6 +39,11 @@ composeApp           # Compose Multiplatform application shell
 - [ ] File content extraction, OCR, vision and RAG indexing
 - [ ] Knowledge, tools/MCP, and agent execution (V2)
 
+## Quality Gates
+
+- Detekt is applied to every Gradle module with shared configuration at `config/detekt/detekt.yml`.
+- Kover is applied to `composeApp` for JVM coverage reporting. The coverage report task is available once JVM tests are added; unit tests are intentionally not a delivery gate during the current architecture migration.
+
 ## Supported Platforms
 
 - Desktop (JVM) via Compose Multiplatform
