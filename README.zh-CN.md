@@ -28,6 +28,8 @@ composeApp           # Compose Multiplatform 应用壳
 
 `core` 和 `database` 已完成迁移：消息/Provider 基础类型位于 `core`，SQLDelight Schema、迁移以及 Android/JVM/iOS 数据库 Driver 位于 `database`。
 
+`feature-model` 负责 Provider 契约、OpenAI-compatible 流式适配器、API Key 持久化和 Ktor 平台网络引擎。
+
 应用主路由使用 Decompose。Feature 页面通过根组件传入的导航回调跳转，而不直接控制导航器；后续新增 Workspace、Knowledge、Agent 页面时可作为独立 Child 接入。
 
 ## 第一阶段（MVP）状态

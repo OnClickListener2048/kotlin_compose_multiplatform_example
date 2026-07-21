@@ -28,6 +28,8 @@ composeApp           # Compose Multiplatform application shell
 
 `core` and `database` are already migrated: message/provider primitives live in `core`; the SQLDelight schema, migrations and Android/JVM/iOS database drivers live in `database`.
 
+`feature-model` owns provider contracts, the OpenAI-compatible streaming adapter, API key persistence and platform Ktor engines.
+
 The application shell uses Decompose as its primary routing framework. Feature screens receive navigation callbacks from a root component instead of directly controlling a navigator.
 
 ## MVP Status

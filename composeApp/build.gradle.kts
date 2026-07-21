@@ -83,6 +83,7 @@ kotlin {
             implementation(projects.shared)
             implementation(project(":core"))
             implementation(project(":database"))
+            implementation(project(":feature-model"))
             implementation(libs.landscapist.placeholder)
             implementation(libs.composeIcons.feather)
 

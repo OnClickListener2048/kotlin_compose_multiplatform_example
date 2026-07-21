@@ -30,48 +30,24 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":core"))
             implementation(project(":database"))
+            implementation(project(":feature-model"))
 
             // Koin 核心库
             implementation(libs.koin.core)
             // Koin for Compose Multiplatform (提供 koinInject() 等)
             implementation(libs.koin.compose)
-            // Ktor 核心客户端
-            implementation(libs.ktor.client.core)
-
-            // 1. Ktor 引擎 (Engine) - 这是 Ktor 的核心概念！
-            // Ktor 需要为每个平台指定一个具体的 HTTP 请求实现。
-            // 你需要为你支持的每个平台都添加一个引擎。
-            // Ktor 会在编译时自动选择正确的引擎。
-
-
-            // 为 JVM/Desktop 添加 CIO 引擎 (也可以用 OkHttp)
-            implementation(libs.ktor.client.cio)
-
-            // 2. Ktor 功能插件 (Plugins) - 按需添加
-            // 内容协商插件，用于自动处理 JSON
-            implementation(libs.ktor.client.content.negotiation)
-            // 使用 kotlinx.serialization 进行 JSON 解析
-            implementation(libs.ktor.serialization.kotlinx.json)
-
-            // 日志插件，方便调试
-            implementation(libs.ktor.client.logging)
-
         }
 
         jvmMain.dependencies {
             implementation(libs.landscapist.coil3)
         }
         androidMain.dependencies {
-            // 为 Android 添加 OkHttp 引擎
-            implementation(libs.ktor.client.android)
-            implementation(libs.ktor.client.okhttp)
             // Koin Android specific helpers (e.g., for androidContext())
             implementation(libs.koin.android)
             implementation(libs.landscapist.coil3)
         }
         appleMain.dependencies {
             // put your Multiplatform dependencies here
-            implementation(libs.ktor.client.darwin)
             implementation(libs.landscapist.coil3)
         }
         nativeMain.dependencies {
