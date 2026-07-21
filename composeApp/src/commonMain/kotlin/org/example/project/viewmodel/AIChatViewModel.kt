@@ -12,10 +12,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.example.project.bean.ChatItemType
 import org.example.project.chat.ChatMessage
-import org.example.project.chat.ChatProvider
 import org.example.project.chat.ChatStreamChunk
 import org.example.project.chat.ProviderConfig
 import org.example.project.chat.ProviderType
+import org.example.project.core.context.ContextEngine
+import org.example.project.core.context.ContextRequest
+import org.example.project.feature.model.ModelGateway
+import org.example.project.feature.workspace.INBOX_WORKSPACE_ID
+import org.example.project.feature.workspace.Workspace
+import org.example.project.feature.workspace.WorkspaceRepository
 import org.example.project.repo.ChatItem
 import org.example.project.repo.ChatRepository
 import org.example.project.repo.Conversation
@@ -27,6 +32,8 @@ import kotlin.time.Clock
 
 data class ChatScreenState(
     val conversations: List<Conversation> = emptyList(),
+    val workspaces: List<Workspace> = emptyList(),
+    val currentWorkspaceId: String = INBOX_WORKSPACE_ID,
     val messages: List<ChatItem> = emptyList(),
     val currentConversationId: String? = null,
     val isStreaming: Boolean = false,
@@ -39,7 +46,9 @@ data class ChatScreenState(
 class AIChatViewModel(
     private val chatRepository: ChatRepository,
     private val apiKeyRepository: ApiKeyRepository,
-    private val chatProvider: ChatProvider
+    private val modelGateway: ModelGateway,
+    private val contextEngine: ContextEngine,
+    private val workspaceRepository: WorkspaceRepository
 ) : ScreenModel {
 
     private val _state = MutableStateFlow(ChatScreenState())
@@ -52,6 +61,8 @@ class AIChatViewModel(
     private var shouldStopStream = false
 
     init {
+        workspaceRepository.ensureInbox()
+        loadWorkspaces()
         loadConversations()
         loadActiveConfig()
         val conversations = _state.value.conversations
@@ -64,8 +75,30 @@ class AIChatViewModel(
     }
 
     fun loadConversations() {
-        val conversations = chatRepository.getConversations()
+        val conversations = chatRepository.getConversations(_state.value.currentWorkspaceId)
         _state.value = _state.value.copy(conversations = conversations)
+    }
+
+    fun loadWorkspaces() {
+        _state.value = _state.value.copy(workspaces = workspaceRepository.getAll())
+    }
+
+    fun selectWorkspace(workspaceId: String) {
+        if (workspaceRepository.getById(workspaceId) == null) return
+        _state.value = _state.value.copy(
+            currentWorkspaceId = workspaceId,
+            currentConversationId = null,
+            messages = emptyList(),
+            inputText = ""
+        )
+        loadConversations()
+    }
+
+    fun createWorkspace(name: String, systemPrompt: String = "") {
+        if (name.isBlank()) return
+        val workspace = workspaceRepository.create(name, systemPrompt)
+        loadWorkspaces()
+        selectWorkspace(workspace.id)
     }
 
     fun loadArchivedConversations(): List<Conversation> {
@@ -118,6 +151,7 @@ class AIChatViewModel(
         }
         val provider = _state.value.activeProvider
         val conversation = chatRepository.createConversation(
+            workspaceId = _state.value.currentWorkspaceId,
             providerType = provider,
             model = config.model
         )
@@ -150,6 +184,7 @@ class AIChatViewModel(
         var conversationId = _state.value.currentConversationId
         if (conversationId == null) {
             val conversation = chatRepository.createConversation(
+                workspaceId = _state.value.currentWorkspaceId,
                 providerType = _state.value.activeProvider,
                 model = config.model
             )
@@ -194,7 +229,14 @@ class AIChatViewModel(
                     ChatMessage(role = if (it.type == ChatItemType.Question) "user" else "assistant", content = it.content)
                 }
 
-                chatProvider.chat(history, config).collect { chunk ->
+                val prompt = contextEngine.build(
+                    ContextRequest(
+                        workspace = workspaceRepository.getById(_state.value.currentWorkspaceId),
+                        conversationId = conversationId,
+                        history = history
+                    )
+                )
+                modelGateway.stream(prompt, config).collect { chunk ->
                     if (shouldStopStream || streamCompleted) return@collect
 
                     if (chunk.isDone) {
@@ -298,7 +340,14 @@ class AIChatViewModel(
                             ChatMessage(role = if (it.type == ChatItemType.Question) "user" else "assistant", content = it.content)
                         } + ChatMessage(role = "user", content = "Please continue from where you left off.")
 
-                chatProvider.chat(history, config).collect { chunk ->
+                val prompt = contextEngine.build(
+                    ContextRequest(
+                        workspace = workspaceRepository.getById(_state.value.currentWorkspaceId),
+                        conversationId = convId,
+                        history = history
+                    )
+                )
+                modelGateway.stream(prompt, config).collect { chunk ->
                             if (shouldStopStream || streamCompleted) return@collect
                             if (chunk.isDone) {
                                 streamCompleted = true

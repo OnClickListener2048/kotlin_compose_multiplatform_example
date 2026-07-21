@@ -13,6 +13,7 @@ CREATE TABLE ChatItem (
 CREATE TABLE Conversation (
     id TEXT NOT NULL PRIMARY KEY,
     title TEXT NOT NULL DEFAULT 'New Chat',
+    workspaceId TEXT NOT NULL DEFAULT 'inbox',
     providerType TEXT AS ProviderType NOT NULL,
     model TEXT NOT NULL DEFAULT '',
     createdAt INTEGER NOT NULL,
@@ -29,6 +30,49 @@ CREATE TABLE ApiKey (
     baseUrl TEXT NOT NULL DEFAULT '',
     model TEXT NOT NULL DEFAULT '',
     isActive INTEGER NOT NULL DEFAULT 0,
+    createdAt INTEGER NOT NULL
+);
+
+CREATE TABLE Workspace (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    systemPrompt TEXT NOT NULL DEFAULT '',
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL,
+    isArchived INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE MemoryEntry (
+    id TEXT NOT NULL PRIMARY KEY,
+    scope TEXT NOT NULL CHECK(scope IN ('GLOBAL', 'WORKSPACE', 'CONVERSATION')),
+    workspaceId TEXT,
+    conversationId TEXT,
+    kind TEXT NOT NULL CHECK(kind IN ('FACT', 'SUMMARY')),
+    content TEXT NOT NULL,
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL,
+    isArchived INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE PromptTemplate (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    content TEXT NOT NULL,
+    workspaceId TEXT,
+    priority INTEGER NOT NULL DEFAULT 0,
+    isEnabled INTEGER NOT NULL DEFAULT 1,
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL
+);
+
+CREATE TABLE FileAsset (
+    id TEXT NOT NULL PRIMARY KEY,
+    workspaceId TEXT,
+    conversationId TEXT,
+    displayName TEXT NOT NULL,
+    mimeType TEXT NOT NULL,
+    localPath TEXT NOT NULL,
+    sizeBytes INTEGER NOT NULL DEFAULT 0,
     createdAt INTEGER NOT NULL
 );
 
@@ -57,6 +101,11 @@ DELETE FROM ChatItem;
 selectConversations:
 SELECT * FROM Conversation WHERE isArchived = 0 ORDER BY updatedAt DESC;
 
+selectConversationsForWorkspace:
+SELECT * FROM Conversation
+WHERE isArchived = 0 AND workspaceId = :workspaceId
+ORDER BY updatedAt DESC;
+
 selectArchivedConversations:
 SELECT * FROM Conversation WHERE isArchived = 1 ORDER BY updatedAt DESC;
 
@@ -67,8 +116,8 @@ selectConversationById:
 SELECT * FROM Conversation WHERE id = :id;
 
 insertConversation:
-INSERT INTO Conversation(id, title, providerType, model, createdAt, updatedAt, isPinned, isArchived)
-VALUES (:id, :title, :providerType, :model, :createdAt, :updatedAt, :isPinned, :isArchived);
+INSERT INTO Conversation(id, title, workspaceId, providerType, model, createdAt, updatedAt, isPinned, isArchived)
+VALUES (:id, :title, :workspaceId, :providerType, :model, :createdAt, :updatedAt, :isPinned, :isArchived);
 
 updateConversationTitle:
 UPDATE Conversation SET title = :title, updatedAt = :updatedAt WHERE id = :id;
@@ -109,3 +158,60 @@ UPDATE ApiKey SET isActive = 0;
 
 deleteApiKey:
 DELETE FROM ApiKey WHERE id = :id;
+
+selectWorkspaces:
+SELECT * FROM Workspace WHERE isArchived = 0 ORDER BY updatedAt DESC;
+
+selectWorkspaceById:
+SELECT * FROM Workspace WHERE id = :id;
+
+insertWorkspace:
+INSERT INTO Workspace(id, name, systemPrompt, createdAt, updatedAt, isArchived)
+VALUES (:id, :name, :systemPrompt, :createdAt, :updatedAt, :isArchived);
+
+updateWorkspace:
+UPDATE Workspace SET name = :name, systemPrompt = :systemPrompt, updatedAt = :updatedAt
+WHERE id = :id;
+
+archiveWorkspace:
+UPDATE Workspace SET isArchived = :isArchived, updatedAt = :updatedAt WHERE id = :id;
+
+selectMemoriesForContext:
+SELECT * FROM MemoryEntry
+WHERE isArchived = 0
+  AND (scope = 'GLOBAL' OR workspaceId = :workspaceId OR conversationId = :conversationId)
+ORDER BY updatedAt DESC LIMIT :limit;
+
+insertMemory:
+INSERT INTO MemoryEntry(id, scope, workspaceId, conversationId, kind, content, createdAt, updatedAt, isArchived)
+VALUES (:id, :scope, :workspaceId, :conversationId, :kind, :content, :createdAt, :updatedAt, :isArchived);
+
+archiveMemory:
+UPDATE MemoryEntry SET isArchived = :isArchived, updatedAt = :updatedAt WHERE id = :id;
+
+selectEnabledPromptTemplates:
+SELECT * FROM PromptTemplate
+WHERE isEnabled = 1 AND (workspaceId IS NULL OR workspaceId = :workspaceId)
+ORDER BY priority DESC, updatedAt DESC;
+
+insertPromptTemplate:
+INSERT INTO PromptTemplate(id, name, content, workspaceId, priority, isEnabled, createdAt, updatedAt)
+VALUES (:id, :name, :content, :workspaceId, :priority, :isEnabled, :createdAt, :updatedAt);
+
+updatePromptTemplate:
+UPDATE PromptTemplate
+SET name = :name, content = :content, priority = :priority, isEnabled = :isEnabled, updatedAt = :updatedAt
+WHERE id = :id;
+
+deletePromptTemplate:
+DELETE FROM PromptTemplate WHERE id = :id;
+
+selectFilesForConversation:
+SELECT * FROM FileAsset WHERE conversationId = :conversationId ORDER BY createdAt ASC;
+
+insertFileAsset:
+INSERT INTO FileAsset(id, workspaceId, conversationId, displayName, mimeType, localPath, sizeBytes, createdAt)
+VALUES (:id, :workspaceId, :conversationId, :displayName, :mimeType, :localPath, :sizeBytes, :createdAt);
+
+deleteFileAsset:
+DELETE FROM FileAsset WHERE id = :id;

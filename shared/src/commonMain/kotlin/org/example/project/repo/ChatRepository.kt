@@ -9,6 +9,7 @@ import kotlin.uuid.ExperimentalUuidApi
 data class Conversation(
     val id: String,
     val title: String,
+    val workspaceId: String,
     val providerType: org.example.project.chat.ProviderType,
     val model: String,
     val createdAt: Long,
@@ -35,6 +36,7 @@ class ChatRepository(
     @OptIn(ExperimentalUuidApi::class)
     fun createConversation(
         title: String = "New Chat",
+        workspaceId: String = "inbox",
         providerType: org.example.project.chat.ProviderType,
         model: String = providerType.defaultModel
     ): Conversation {
@@ -43,6 +45,7 @@ class ChatRepository(
         queries.insertConversation(
             id = id,
             title = title,
+            workspaceId = workspaceId,
             providerType = providerType,
             model = model,
             createdAt = time,
@@ -50,11 +53,15 @@ class ChatRepository(
             isPinned = 0L,
             isArchived = 0L
         )
-        return Conversation(id, title, providerType, model, time, time, false, false)
+        return Conversation(id, title, workspaceId, providerType, model, time, time, false, false)
     }
 
     fun getConversations(): List<Conversation> {
         return queries.selectConversations().executeAsList().map { it.toConversation() }
+    }
+
+    fun getConversations(workspaceId: String): List<Conversation> {
+        return queries.selectConversationsForWorkspace(workspaceId).executeAsList().map { it.toConversation() }
     }
 
     fun getArchivedConversations(): List<Conversation> {
@@ -133,6 +140,7 @@ class ChatRepository(
 private fun com.watson.database.sqldelight.Conversation.toConversation() = Conversation(
     id = id,
     title = title,
+    workspaceId = workspaceId,
     providerType = providerType,
     model = model,
     createdAt = createdAt,
