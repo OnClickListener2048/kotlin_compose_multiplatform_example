@@ -18,6 +18,8 @@ import org.example.project.chat.ProviderType
 import org.example.project.core.context.ContextEngine
 import org.example.project.core.context.ContextRequest
 import org.example.project.feature.model.ModelGateway
+import org.example.project.feature.files.FileAsset
+import org.example.project.feature.files.FileAssetRepository
 import org.example.project.feature.workspace.INBOX_WORKSPACE_ID
 import org.example.project.feature.workspace.Workspace
 import org.example.project.feature.workspace.WorkspaceRepository
@@ -34,6 +36,7 @@ data class ChatScreenState(
     val conversations: List<Conversation> = emptyList(),
     val workspaces: List<Workspace> = emptyList(),
     val currentWorkspaceId: String = INBOX_WORKSPACE_ID,
+    val attachments: List<FileAsset> = emptyList(),
     val messages: List<ChatItem> = emptyList(),
     val currentConversationId: String? = null,
     val isStreaming: Boolean = false,
@@ -48,7 +51,8 @@ class AIChatViewModel(
     private val apiKeyRepository: ApiKeyRepository,
     private val modelGateway: ModelGateway,
     private val contextEngine: ContextEngine,
-    private val workspaceRepository: WorkspaceRepository
+    private val workspaceRepository: WorkspaceRepository,
+    private val fileAssetRepository: FileAssetRepository
 ) : ScreenModel {
 
     private val _state = MutableStateFlow(ChatScreenState())
@@ -89,6 +93,7 @@ class AIChatViewModel(
             currentWorkspaceId = workspaceId,
             currentConversationId = null,
             messages = emptyList(),
+            attachments = emptyList(),
             inputText = ""
         )
         loadConversations()
@@ -158,6 +163,7 @@ class AIChatViewModel(
         _state.value = _state.value.copy(
             currentConversationId = conversation.id,
             messages = emptyList(),
+            attachments = emptyList(),
             inputText = ""
         )
         loadConversations()
@@ -168,8 +174,31 @@ class AIChatViewModel(
         _state.value = _state.value.copy(
             currentConversationId = conversationId,
             messages = messages,
+            attachments = fileAssetRepository.forConversation(conversationId),
             inputText = ""
         )
+    }
+
+    fun attachFile(displayName: String, mimeType: String, localPath: String, sizeBytes: Long) {
+        val conversationId = _state.value.currentConversationId ?: run {
+            newConversation()
+            _state.value.currentConversationId
+        } ?: return
+        fileAssetRepository.attach(
+            displayName = displayName,
+            mimeType = mimeType,
+            localPath = localPath,
+            sizeBytes = sizeBytes,
+            workspaceId = _state.value.currentWorkspaceId,
+            conversationId = conversationId
+        )
+        _state.value = _state.value.copy(attachments = fileAssetRepository.forConversation(conversationId))
+    }
+
+    fun removeAttachment(id: String) {
+        fileAssetRepository.delete(id)
+        val conversationId = _state.value.currentConversationId ?: return
+        _state.value = _state.value.copy(attachments = fileAssetRepository.forConversation(conversationId))
     }
 
     fun sendMessage() {

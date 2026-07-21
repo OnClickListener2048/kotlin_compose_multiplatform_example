@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -68,8 +69,14 @@ import kotlinx.coroutines.launch
 import org.example.project.bean.ChatItemType
 import org.example.project.repo.Conversation
 import org.example.project.feature.workspace.Workspace
+import org.example.project.feature.files.FileAsset
 import org.example.project.viewmodel.AIChatViewModel
 import org.koin.compose.koinInject
+import io.github.vinceglb.filekit.mimeType
+import io.github.vinceglb.filekit.name
+import io.github.vinceglb.filekit.size
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ChevronDown
 import compose.icons.feathericons.Folder
@@ -80,6 +87,7 @@ import compose.icons.feathericons.RefreshCw
 import compose.icons.feathericons.Send
 import compose.icons.feathericons.Settings
 import compose.icons.feathericons.Square
+import compose.icons.feathericons.Paperclip
 
 class AIChatScreen : Screen {
 
@@ -96,6 +104,19 @@ class AIChatScreen : Screen {
         val drawerState = rememberDrawerState(DrawerValue.Closed)
         val scope = rememberCoroutineScope()
         val snackbarHostState = remember { SnackbarHostState() }
+        val filePicker = rememberFilePickerLauncher(
+            type = FileKitType.File(listOf("pdf", "doc", "docx", "xls", "xlsx", "md", "txt", "png", "jpg", "jpeg", "webp")),
+            title = "Attach file"
+        ) { file ->
+            if (file != null) {
+                viewModel.attachFile(
+                    displayName = file.name,
+                    mimeType = file.mimeType()?.toString() ?: "application/octet-stream",
+                    localPath = file.toString(),
+                    sizeBytes = file.size()
+                )
+            }
+        }
 
         LaunchedEffect(Unit) {
             viewModel.toastEvents.collect { message ->
@@ -190,6 +211,9 @@ class AIChatScreen : Screen {
                             onStop = { viewModel.stopGeneration() },
                             onRegenerate = { viewModel.regenerate() },
                             onContinue = { viewModel.continueGeneration() },
+                            attachments = state.attachments,
+                            onAttach = { filePicker.launch() },
+                            onRemoveAttachment = { viewModel.removeAttachment(it) },
                             enabled = state.activeConfig != null,
                             modifier = Modifier.navigationBarsPadding()
                         )
@@ -510,16 +534,35 @@ private fun ChatInputBar(
     onStop: () -> Unit,
     onRegenerate: () -> Unit,
     onContinue: () -> Unit,
+    attachments: List<FileAsset>,
+    onAttach: () -> Unit,
+    onRemoveAttachment: (String) -> Unit,
     enabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)) {
+        if (attachments.isNotEmpty()) {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(bottom = 6.dp)) {
+                items(attachments, key = { it.id }) { asset ->
+                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, end = 2.dp)) {
+                            Icon(FeatherIcons.Paperclip, contentDescription = null, modifier = Modifier.size(13.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text(asset.displayName, style = MaterialTheme.typography.labelSmall, maxLines = 1, modifier = Modifier.widthIn(max = 130.dp))
+                            TextButton(onClick = { onRemoveAttachment(asset.id) }, contentPadding = androidx.compose.foundation.layout.PaddingValues(4.dp)) {
+                                Text("×")
+                            }
+                        }
+                    }
+                }
+            }
+        }
         if (isStreaming) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
-                TextButton(onClick = onStop) { Text("\u25A0 Stop") }
+                TextButton(onClick = onStop) { Icon(FeatherIcons.Square, "Stop", modifier = Modifier.size(14.dp)); Spacer(Modifier.width(5.dp)); Text("Stop") }
             }
         } else {
             Row(
@@ -538,11 +581,16 @@ private fun ChatInputBar(
             enabled = enabled && !isStreaming,
             modifier = Modifier.fillMaxWidth(),
             trailingIcon = {
-                IconButton(
-                    onClick = onSend,
-                    enabled = enabled && text.isNotBlank() && !isStreaming
-                ) {
-                    Icon(FeatherIcons.Send, contentDescription = "Send")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onAttach, enabled = enabled && !isStreaming) {
+                        Icon(FeatherIcons.Paperclip, contentDescription = "Attach file")
+                    }
+                    IconButton(
+                        onClick = onSend,
+                        enabled = enabled && text.isNotBlank() && !isStreaming
+                    ) {
+                        Icon(FeatherIcons.Send, contentDescription = "Send")
+                    }
                 }
             },
             shape = RoundedCornerShape(20.dp),
