@@ -88,6 +88,8 @@ kotlin {
             implementation(project(":feature-memory"))
             implementation(project(":feature-files"))
             implementation(project(":feature-prompt"))
+            implementation(project(":feature-chat"))
+            implementation(project(":feature-settings"))
             implementation(libs.landscapist.placeholder)
             implementation(libs.composeIcons.feather)
 

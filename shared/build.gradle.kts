@@ -35,6 +35,8 @@ kotlin {
             implementation(project(":feature-memory"))
             implementation(project(":feature-files"))
             implementation(project(":feature-prompt"))
+            implementation(project(":feature-chat"))
+            implementation(project(":feature-settings"))
 
             // Koin 核心库
             implementation(libs.koin.core)

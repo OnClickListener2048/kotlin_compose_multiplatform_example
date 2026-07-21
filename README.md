@@ -38,6 +38,8 @@ composeApp           # Compose Multiplatform application shell
 
 `feature-prompt` owns the Context Engine, ordered prompt providers and reusable prompt templates.
 
+`feature-chat` owns conversation/message persistence; `feature-settings` owns persisted theme preferences.
+
 The application shell uses Decompose as its primary routing framework. Feature screens receive navigation callbacks from a root component instead of directly controlling a navigator.
 
 ## MVP Status
