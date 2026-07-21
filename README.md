@@ -30,6 +30,8 @@ composeApp           # Compose Multiplatform application shell
 
 `feature-model` owns provider contracts, the OpenAI-compatible streaming adapter, API key persistence and platform Ktor engines.
 
+`feature-workspace` owns workspace creation, selection, workspace instructions and the default personal workspace.
+
 The application shell uses Decompose as its primary routing framework. Feature screens receive navigation callbacks from a root component instead of directly controlling a navigator.
 
 ## MVP Status
