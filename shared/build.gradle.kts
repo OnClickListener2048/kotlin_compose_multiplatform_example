@@ -1,20 +1,9 @@
-import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.androidLibrary)
-    id("app.cash.sqldelight") version "2.1.0"
-}
-
-sqldelight {
-    databases {
-        create("WatsonDatabase") {
-            packageName.set("com.watson.database")
-        }
-    }
-    linkSqlite = true
 }
 
 kotlin {
@@ -37,17 +26,10 @@ kotlin {
 
     jvm()
 
-    js {
-        browser()
-    }
-    
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        browser()
-    }
-    
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":core"))
+            implementation(project(":database"))
 
             // Koin 核心库
             implementation(libs.koin.core)
@@ -74,22 +56,15 @@ kotlin {
             // 日志插件，方便调试
             implementation(libs.ktor.client.logging)
 
-            // SQLDelight 运行时库
-            implementation(libs.runtime)
-            // Coroutines 扩展，强烈推荐，用于 Flow 支持
-            implementation(libs.coroutines.extensions)
         }
 
         jvmMain.dependencies {
-            // JVM/Desktop 平台的数据库驱动
-            implementation(libs.sqlite.driver)
             implementation(libs.landscapist.coil3)
         }
         androidMain.dependencies {
             // 为 Android 添加 OkHttp 引擎
             implementation(libs.ktor.client.android)
             implementation(libs.ktor.client.okhttp)
-            implementation(libs.android.driver)
             // Koin Android specific helpers (e.g., for androidContext())
             implementation(libs.koin.android)
             implementation(libs.landscapist.coil3)
@@ -100,8 +75,6 @@ kotlin {
             implementation(libs.landscapist.coil3)
         }
         nativeMain.dependencies {
-            // iOS/Native 平台的数据库驱动
-            implementation(libs.native.driver)
             implementation(libs.landscapist.coil3)
         }
         commonTest.dependencies {

@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.androidLibrary)
 }
 
@@ -10,6 +11,9 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
     jvm()
+    sourceSets {
+        commonMain.dependencies { implementation(libs.ktor.serialization.kotlinx.json) }
+    }
 }
 
 android {

@@ -26,6 +26,8 @@ composeApp           # Compose Multiplatform application shell
 
 `shared` is a temporary compatibility bridge while existing implementations are migrated module by module. New features must not be added there.
 
+`core` and `database` are already migrated: message/provider primitives live in `core`; the SQLDelight schema, migrations and Android/JVM/iOS database drivers live in `database`.
+
 The application shell uses Decompose as its primary routing framework. Feature screens receive navigation callbacks from a root component instead of directly controlling a navigator.
 
 ## MVP Status

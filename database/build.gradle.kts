@@ -19,7 +19,10 @@ kotlin {
     iosSimulatorArm64()
     jvm()
     sourceSets {
-        commonMain.dependencies { implementation(libs.runtime) }
+        commonMain.dependencies {
+            implementation(project(":core"))
+            implementation(libs.runtime)
+        }
         androidMain.dependencies { implementation(libs.android.driver) }
         jvmMain.dependencies { implementation(libs.sqlite.driver) }
         nativeMain.dependencies { implementation(libs.native.driver) }

@@ -81,6 +81,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.coroutines.core)
             implementation(projects.shared)
+            implementation(project(":core"))
+            implementation(project(":database"))
             implementation(libs.landscapist.placeholder)
             implementation(libs.composeIcons.feather)
 
