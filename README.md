@@ -36,6 +36,8 @@ composeApp           # Compose Multiplatform application shell
 
 `feature-files` owns portable attachment metadata; platform file pickers stay in the Compose application layer.
 
+`feature-prompt` owns the Context Engine, ordered prompt providers and reusable prompt templates.
+
 The application shell uses Decompose as its primary routing framework. Feature screens receive navigation callbacks from a root component instead of directly controlling a navigator.
 
 ## MVP Status
