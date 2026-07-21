@@ -52,9 +52,13 @@ class OpenAICompatibleProvider(
                 }
             }
         ) {
+            var streamCompleted = false
             incoming.collect { event ->
+                if (streamCompleted) return@collect
+
                 val data = event.data ?: return@collect
                 if (data == "[DONE]") {
+                    streamCompleted = true
                     emit(ChatStreamChunk(content = "", isDone = true))
                     return@collect
                 }
@@ -63,6 +67,7 @@ class OpenAICompatibleProvider(
                     val delta = response.choices?.firstOrNull()?.delta
                     val content = delta?.content ?: ""
                     val finishReason = response.choices?.firstOrNull()?.finish_reason
+                    if (finishReason != null) streamCompleted = true
                     emit(ChatStreamChunk(
                         content = content,
                         isDone = finishReason != null,

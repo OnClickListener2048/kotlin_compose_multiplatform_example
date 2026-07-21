@@ -20,10 +20,10 @@ data class Conversation(
 data class ChatItem(
     val id: String,
     val conversationId: String,
-    var content: String,
+    val content: String,
     val type: ChatItemType,
     val createdAt: Long,
-    var isLoading: Boolean = false
+    val isLoading: Boolean = false
 )
 
 class ChatRepository(

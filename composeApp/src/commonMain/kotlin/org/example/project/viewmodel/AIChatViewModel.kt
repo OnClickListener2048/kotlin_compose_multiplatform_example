@@ -163,13 +163,14 @@ class AIChatViewModel(
             inputText = "",
             messages = messages
         )
+        loadConversations()
         streamChat(conversationId, messages)
     }
 
     private fun streamChat(conversationId: String, messages: List<ChatItem>) {
         val config = _state.value.activeConfig ?: return
         @OptIn(ExperimentalUuidApi::class, kotlin.time.ExperimentalTime::class)
-        val assistantMsg = ChatItem(
+        var assistantMsg = ChatItem(
             id = Uuid.random().toString(),
             conversationId = conversationId,
             content = "",
@@ -186,6 +187,7 @@ class AIChatViewModel(
         shouldStopStream = false
         streamJob = screenModelScope.launch {
             try {
+                var streamCompleted = false
                 val history = messages
                     .filter { !it.isLoading && !it.content.startsWith("Error:") }
                     .map {
@@ -193,9 +195,10 @@ class AIChatViewModel(
                 }
 
                 chatProvider.chat(history, config).collect { chunk ->
-                    if (shouldStopStream) return@collect
+                    if (shouldStopStream || streamCompleted) return@collect
 
                     if (chunk.isDone) {
+                        streamCompleted = true
                         chatRepository.insertMessage(
                             conversationId,
                             assistantMsg.content,
@@ -211,14 +214,18 @@ class AIChatViewModel(
                         _state.value = _state.value.copy(isStreaming = false)
                         loadConversations()
                     } else {
-                        assistantMsg.content += chunk.content
-                        assistantMsg.isLoading = false
+                        assistantMsg = assistantMsg.copy(
+                            content = assistantMsg.content + chunk.content,
+                            isLoading = false
+                        )
                         updateMessageInState(assistantMsg)
                     }
                 }
             } catch (e: Exception) {
-                assistantMsg.content = "Error: ${e.message}"
-                assistantMsg.isLoading = false
+                assistantMsg = assistantMsg.copy(
+                    content = "Error: ${e.message}",
+                    isLoading = false
+                )
                 updateMessageInState(assistantMsg)
                 _state.value = _state.value.copy(isStreaming = false)
             }
@@ -268,7 +275,7 @@ class AIChatViewModel(
             if (lastAssistant != null) {
                 val convId = _state.value.currentConversationId ?: return
                 @OptIn(ExperimentalUuidApi::class, kotlin.time.ExperimentalTime::class)
-                val assistantMsg = ChatItem(
+                var assistantMsg = ChatItem(
                     id = Uuid.random().toString(),
                     conversationId = convId,
                     content = "",
@@ -284,6 +291,7 @@ class AIChatViewModel(
                 shouldStopStream = false
                 streamJob = screenModelScope.launch {
                     try {
+                        var streamCompleted = false
                         val history = _state.value.messages
                             .filter { !it.isLoading && !it.content.startsWith("Error:") }
                             .map {
@@ -291,19 +299,25 @@ class AIChatViewModel(
                         } + ChatMessage(role = "user", content = "Please continue from where you left off.")
 
                 chatProvider.chat(history, config).collect { chunk ->
-                            if (shouldStopStream) return@collect
+                            if (shouldStopStream || streamCompleted) return@collect
                             if (chunk.isDone) {
+                                streamCompleted = true
                                 chatRepository.insertMessage(convId, assistantMsg.content, ChatItemType.Answer)
                                 _state.value = _state.value.copy(isStreaming = false)
+                                loadConversations()
                             } else {
-                                assistantMsg.content += chunk.content
-                                assistantMsg.isLoading = false
+                                assistantMsg = assistantMsg.copy(
+                                    content = assistantMsg.content + chunk.content,
+                                    isLoading = false
+                                )
                                 updateMessageInState(assistantMsg)
                             }
                         }
                     } catch (e: Exception) {
-                        assistantMsg.content = "Error: ${e.message}"
-                        assistantMsg.isLoading = false
+                        assistantMsg = assistantMsg.copy(
+                            content = "Error: ${e.message}",
+                            isLoading = false
+                        )
                         updateMessageInState(assistantMsg)
                         _state.value = _state.value.copy(isStreaming = false)
                     }
