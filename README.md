@@ -26,6 +26,8 @@ composeApp           # Compose Multiplatform application shell
 
 `shared` is a temporary compatibility bridge while existing implementations are migrated module by module. New features must not be added there.
 
+The application shell uses Decompose as its primary routing framework. Feature screens receive navigation callbacks from a root component instead of directly controlling a navigator.
+
 ## MVP Status
 
 - [x] Streaming chat, stop, regenerate and continue

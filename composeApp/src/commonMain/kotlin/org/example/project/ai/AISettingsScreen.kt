@@ -39,9 +39,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import org.example.project.chat.ProviderType
 import org.example.project.repo.ApiKeyRepository
 import org.example.project.repo.ApiKeyInfo
@@ -49,12 +46,11 @@ import org.example.project.feature.settings.SettingsRepository
 import org.example.project.feature.settings.ThemeMode
 import org.koin.compose.koinInject
 
-class AISettingsScreen : Screen {
+class AISettingsScreen {
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    override fun Content() {
-        val navigator = LocalNavigator.currentOrThrow
+    fun Content(onBack: () -> Unit) {
         val apiKeyRepo = koinInject<ApiKeyRepository>()
         val settingsRepo = koinInject<SettingsRepository>()
         var keys by remember { mutableStateOf(apiKeyRepo.getAllKeys()) }
@@ -71,7 +67,7 @@ class AISettingsScreen : Screen {
                 TopAppBar(
                     title = { Text("Settings") },
                     navigationIcon = {
-                        IconButton(onClick = { navigator.pop() }) {
+                        IconButton(onClick = onBack) {
                             Text("\u2190", fontWeight = FontWeight.Bold)
                         }
                     },

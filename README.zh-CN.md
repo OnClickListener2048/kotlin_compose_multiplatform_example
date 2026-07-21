@@ -26,6 +26,8 @@ composeApp           # Compose Multiplatform 应用壳
 
 目前的 `shared` 仅作为迁移兼容层保留。新功能不应继续添加到其中，而应进入对应的 Feature Module。
 
+应用主路由使用 Decompose。Feature 页面通过根组件传入的导航回调跳转，而不直接控制导航器；后续新增 Workspace、Knowledge、Agent 页面时可作为独立 Child 接入。
+
 ## 第一阶段（MVP）状态
 
 - [x] 流式聊天、停止生成、重新生成、续写

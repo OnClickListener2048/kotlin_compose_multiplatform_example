@@ -79,6 +79,7 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.coroutines.core)
             implementation(projects.shared)
             implementation(libs.landscapist.placeholder)
             implementation(libs.composeIcons.feather)
@@ -86,20 +87,8 @@ kotlin {
 
             // Multiplatform
 
-            // Navigator
-            implementation(libs.voyager.navigator)
-
-            // Screen Model
-            implementation(libs.voyager.screenmodel)
-
-            // BottomSheetNavigator
-            implementation(libs.voyager.bottom.sheet.navigator)
-
-            // TabNavigator
-            implementation(libs.voyager.tab.navigator)
-
-            // Transitions
-            implementation(libs.voyager.transitions)
+            implementation(libs.decompose)
+            implementation(libs.decompose.compose)
 
             // Koin integration
 

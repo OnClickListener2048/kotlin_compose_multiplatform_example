@@ -1,25 +1,30 @@
 package org.example.project
 
 import androidx.compose.runtime.Composable
-import cafe.adriel.voyager.core.annotation.ExperimentalVoyagerApi
-import cafe.adriel.voyager.navigator.Navigator
-import cafe.adriel.voyager.transitions.SlideTransition
+import androidx.compose.runtime.remember
+import com.arkivanov.decompose.DefaultComponentContext
+import com.arkivanov.decompose.extensions.compose.stack.Children
+import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import org.example.project.ai.AIChatScreen
+import org.example.project.ai.AISettingsScreen
 import org.example.project.di.initKoin
+import org.example.project.navigation.DefaultRootComponent
+import org.example.project.navigation.RootComponent
 import org.example.project.theme.AIAssistantTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-@OptIn(ExperimentalVoyagerApi::class)
 @Composable
 @Preview
 fun App() {
-
+    val root = remember { DefaultRootComponent(DefaultComponentContext(LifecycleRegistry())) }
     AIAssistantTheme {
-        Navigator(AIChatScreen()) { navigator ->
-            SlideTransition(navigator)
+        Children(stack = root.childStack) { child ->
+            when (child.instance) {
+                RootComponent.Child.Chat -> AIChatScreen().Content(onSettings = root::openSettings)
+                RootComponent.Child.Settings -> AISettingsScreen().Content(onBack = root::closeSettings)
+            }
         }
     }
-
 }
 
 fun initKoinApp() {

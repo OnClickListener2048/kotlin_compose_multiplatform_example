@@ -1,8 +1,9 @@
 package org.example.project.viewmodel
 
-import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -55,7 +56,9 @@ class AIChatViewModel(
     private val workspaceRepository: WorkspaceRepository,
     private val fileAssetRepository: FileAssetRepository,
     private val conversationMemoryService: ConversationMemoryService
-) : ScreenModel {
+) {
+
+    private val screenModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     private val _state = MutableStateFlow(ChatScreenState())
     val state: StateFlow<ChatScreenState> = _state.asStateFlow()

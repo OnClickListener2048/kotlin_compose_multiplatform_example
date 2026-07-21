@@ -62,9 +62,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.launch
 import org.example.project.bean.ChatItemType
 import org.example.project.repo.Conversation
@@ -89,18 +86,17 @@ import compose.icons.feathericons.Settings
 import compose.icons.feathericons.Square
 import compose.icons.feathericons.Paperclip
 
-class AIChatScreen : Screen {
+class AIChatScreen {
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    override fun Content() {
+    fun Content(onSettings: () -> Unit) {
         val viewModel = koinInject<AIChatViewModel>()
         var state by remember { mutableStateOf(viewModel.state.value) }
 
         LaunchedEffect(viewModel) {
             viewModel.state.collect { state = it }
         }
-        val navigator = LocalNavigator.currentOrThrow
         val drawerState = rememberDrawerState(DrawerValue.Closed)
         val scope = rememberCoroutineScope()
         val snackbarHostState = remember { SnackbarHostState() }
@@ -149,7 +145,7 @@ class AIChatScreen : Screen {
                         onSearch = { viewModel.searchConversations(it) },
                         onSettings = {
                             scope.launch { drawerState.close() }
-                            navigator.push(AISettingsScreen())
+                            onSettings()
                         }
                     )
                 }
