@@ -34,4 +34,16 @@ plugins {
 
 include(":composeApp")
 include(":server")
-include(":shared")
+include(":shared") // Temporary compatibility bridge; feature code is being migrated out.
+include(":core")
+include(":database")
+include(":feature-chat")
+include(":feature-prompt")
+include(":feature-memory")
+include(":feature-knowledge")
+include(":feature-model")
+include(":feature-tools")
+include(":feature-agent")
+include(":feature-workspace")
+include(":feature-files")
+include(":feature-settings")

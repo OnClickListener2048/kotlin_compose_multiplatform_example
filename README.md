@@ -2,6 +2,43 @@
 
 A Kotlin Multiplatform (KMP) AI Assistant supporting multiple LLM providers with streaming chat, conversation management, and API key management.
 
+Chinese documentation: [README.zh-CN.md](README.zh-CN.md)
+
+## Modular Architecture
+
+The project is being migrated from a single `shared` module to independent KMP modules. Each module exposes only cross-platform contracts from `commonMain`; database drivers, HTTP engines, file access, and UI integrations remain in platform source sets.
+
+```
+core                 # Shared contracts and context primitives
+database             # SQLDelight schema, migrations and platform drivers
+feature-chat         # Conversation and message use cases
+feature-prompt       # Context Engine and prompt providers
+feature-memory       # Recent, summary and long-term memory
+feature-model        # Provider abstractions and model configuration
+feature-files        # File metadata and attachment pipeline
+feature-workspace    # Workspace-scoped context
+feature-settings     # User preferences and themes
+feature-knowledge    # V2: RAG contracts and indexing
+feature-tools        # V2: tool and MCP contracts
+feature-agent        # V2: planning and execution contracts
+composeApp           # Compose Multiplatform application shell
+```
+
+`shared` is a temporary compatibility bridge while existing implementations are migrated module by module. New features must not be added there.
+
+## MVP Status
+
+- [x] Streaming chat, stop, regenerate and continue
+- [x] Provider/API key switching and model selection
+- [x] Context Engine: system, template, workspace, memory, file manifest and recent history
+- [x] Workspace-scoped conversations
+- [x] Conversation file attachments (PDF, Office, Markdown, text, and images)
+- [x] Persisted system/light/dark theme
+- [x] Summary-memory service (configured at 500 messages)
+- [ ] Markdown renderer, rich message types, and edit/retry controls
+- [ ] File content extraction, OCR, vision and RAG indexing
+- [ ] Knowledge, tools/MCP, and agent execution (V2)
+
 ## Supported Platforms
 
 - Desktop (JVM) via Compose Multiplatform
