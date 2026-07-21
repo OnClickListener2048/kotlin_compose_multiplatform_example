@@ -32,6 +32,8 @@ composeApp           # Compose Multiplatform application shell
 
 `feature-workspace` owns workspace creation, selection, workspace instructions and the default personal workspace.
 
+`feature-memory` owns scoped recall and the model-backed conversation summary policy.
+
 The application shell uses Decompose as its primary routing framework. Feature screens receive navigation callbacks from a root component instead of directly controlling a navigator.
 
 ## MVP Status

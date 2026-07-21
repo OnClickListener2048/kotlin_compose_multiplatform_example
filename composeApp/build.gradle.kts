@@ -85,6 +85,7 @@ kotlin {
             implementation(project(":database"))
             implementation(project(":feature-model"))
             implementation(project(":feature-workspace"))
+            implementation(project(":feature-memory"))
             implementation(libs.landscapist.placeholder)
             implementation(libs.composeIcons.feather)
 
