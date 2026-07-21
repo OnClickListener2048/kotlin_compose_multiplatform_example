@@ -20,6 +20,7 @@ import org.example.project.core.context.ContextRequest
 import org.example.project.feature.model.ModelGateway
 import org.example.project.feature.files.FileAsset
 import org.example.project.feature.files.FileAssetRepository
+import org.example.project.feature.memory.ConversationMemoryService
 import org.example.project.feature.workspace.INBOX_WORKSPACE_ID
 import org.example.project.feature.workspace.Workspace
 import org.example.project.feature.workspace.WorkspaceRepository
@@ -52,7 +53,8 @@ class AIChatViewModel(
     private val modelGateway: ModelGateway,
     private val contextEngine: ContextEngine,
     private val workspaceRepository: WorkspaceRepository,
-    private val fileAssetRepository: FileAssetRepository
+    private val fileAssetRepository: FileAssetRepository,
+    private val conversationMemoryService: ConversationMemoryService
 ) : ScreenModel {
 
     private val _state = MutableStateFlow(ChatScreenState())
@@ -284,6 +286,20 @@ class AIChatViewModel(
                         }
                         _state.value = _state.value.copy(isStreaming = false)
                         loadConversations()
+                        screenModelScope.launch {
+                            conversationMemoryService.summarizeIfNeeded(
+                                workspaceId = chatRepository.getConversationById(conversationId)?.workspaceId
+                                    ?: INBOX_WORKSPACE_ID,
+                                conversationId = conversationId,
+                                messages = (messages + assistantMsg).map {
+                                    ChatMessage(
+                                        role = if (it.type == ChatItemType.Question) "user" else "assistant",
+                                        content = it.content
+                                    )
+                                },
+                                config = config
+                            )
+                        }
                     } else {
                         assistantMsg = assistantMsg.copy(
                             content = assistantMsg.content + chunk.content,

@@ -16,6 +16,7 @@ import org.example.project.core.context.TemplatePromptProvider
 import org.example.project.core.context.WorkspacePromptProvider
 import org.example.project.feature.files.FileAssetRepository
 import org.example.project.feature.memory.MemoryRepository
+import org.example.project.feature.memory.ConversationMemoryService
 import org.example.project.feature.model.ChatProviderModelGateway
 import org.example.project.feature.model.ModelGateway
 import org.example.project.feature.prompt.PromptTemplateRepository
@@ -67,6 +68,7 @@ val sharedModule = module {
     }
 
     single<ModelGateway> { ChatProviderModelGateway(get()) }
+    single { ConversationMemoryService(get(), get()) }
 
     single {
         ContextEngine(
