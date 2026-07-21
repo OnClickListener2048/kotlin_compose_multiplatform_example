@@ -33,6 +33,7 @@ kotlin {
             implementation(project(":feature-model"))
             implementation(project(":feature-workspace"))
             implementation(project(":feature-memory"))
+            implementation(project(":feature-files"))
 
             // Koin 核心库
             implementation(libs.koin.core)

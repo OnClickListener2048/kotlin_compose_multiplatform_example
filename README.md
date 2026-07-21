@@ -34,6 +34,8 @@ composeApp           # Compose Multiplatform application shell
 
 `feature-memory` owns scoped recall and the model-backed conversation summary policy.
 
+`feature-files` owns portable attachment metadata; platform file pickers stay in the Compose application layer.
+
 The application shell uses Decompose as its primary routing framework. Feature screens receive navigation callbacks from a root component instead of directly controlling a navigator.
 
 ## MVP Status
