@@ -32,6 +32,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
@@ -66,8 +67,19 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.launch
 import org.example.project.bean.ChatItemType
 import org.example.project.repo.Conversation
+import org.example.project.feature.workspace.Workspace
 import org.example.project.viewmodel.AIChatViewModel
 import org.koin.compose.koinInject
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.ChevronDown
+import compose.icons.feathericons.Folder
+import compose.icons.feathericons.Menu
+import compose.icons.feathericons.MoreVertical
+import compose.icons.feathericons.Plus
+import compose.icons.feathericons.RefreshCw
+import compose.icons.feathericons.Send
+import compose.icons.feathericons.Settings
+import compose.icons.feathericons.Square
 
 class AIChatScreen : Screen {
 
@@ -97,7 +109,11 @@ class AIChatScreen : Screen {
                 ModalDrawerSheet(modifier = Modifier.width(300.dp)) {
                     ConversationSidebar(
                         conversations = state.conversations.filter { !it.isArchived },
+                        workspaces = state.workspaces,
+                        currentWorkspaceId = state.currentWorkspaceId,
                         currentId = state.currentConversationId,
+                        onSelectWorkspace = { viewModel.selectWorkspace(it) },
+                        onCreateWorkspace = { name, prompt -> viewModel.createWorkspace(name, prompt) },
                         onSelect = {
                             viewModel.selectConversation(it)
                             scope.launch { drawerState.close() }
@@ -129,7 +145,7 @@ class AIChatScreen : Screen {
                         },
                         navigationIcon = {
                             IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Text("\u2630", fontSize = 22.sp)
+                                Icon(FeatherIcons.Menu, contentDescription = "Open conversations")
                             }
                         },
                         actions = {
@@ -140,7 +156,7 @@ class AIChatScreen : Screen {
                                 modifier = Modifier.padding(end = 8.dp)
                             )
                             IconButton(onClick = { viewModel.newConversation() }) {
-                                Text("+", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                                Icon(FeatherIcons.Plus, contentDescription = "New conversation")
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
@@ -214,7 +230,11 @@ private fun WelcomeScreen(onNewChat: () -> Unit, providerName: String) {
 @Composable
 private fun ConversationSidebar(
     conversations: List<Conversation>,
+    workspaces: List<Workspace>,
+    currentWorkspaceId: String,
     currentId: String?,
+    onSelectWorkspace: (String) -> Unit,
+    onCreateWorkspace: (String, String) -> Unit,
     onSelect: (String) -> Unit,
     onNew: () -> Unit,
     onDelete: (String) -> Unit,
@@ -225,6 +245,9 @@ private fun ConversationSidebar(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var showDeleteDialog by remember { mutableStateOf<String?>(null) }
+    var workspaceMenuExpanded by remember { mutableStateOf(false) }
+    var showCreateWorkspace by remember { mutableStateOf(false) }
+    val activeWorkspace = workspaces.find { it.id == currentWorkspaceId }
 
     Column(modifier = Modifier.fillMaxHeight().padding(top = 16.dp)) {
         Row(
@@ -232,10 +255,42 @@ private fun ConversationSidebar(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Conversations", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("AI Workspace", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Row {
-                IconButton(onClick = onNew) { Text("+", fontSize = 22.sp) }
-                IconButton(onClick = onSettings) { Text("\u2699", fontSize = 20.sp) }
+                IconButton(onClick = onNew) { Icon(FeatherIcons.Plus, contentDescription = "New conversation") }
+                IconButton(onClick = onSettings) { Icon(FeatherIcons.Settings, contentDescription = "Settings") }
+            }
+        }
+
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp)) {
+            Card(
+                modifier = Modifier.fillMaxWidth().clickable { workspaceMenuExpanded = true },
+                shape = RoundedCornerShape(10.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(FeatherIcons.Folder, contentDescription = null, modifier = Modifier.size(17.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(activeWorkspace?.name ?: "Personal", modifier = Modifier.weight(1f), maxLines = 1)
+                    Icon(FeatherIcons.ChevronDown, contentDescription = "Switch workspace", modifier = Modifier.size(16.dp))
+                }
+            }
+            DropdownMenu(expanded = workspaceMenuExpanded, onDismissRequest = { workspaceMenuExpanded = false }) {
+                workspaces.forEach { workspace ->
+                    DropdownMenuItem(
+                        text = { Text(workspace.name) },
+                        onClick = { onSelectWorkspace(workspace.id); workspaceMenuExpanded = false }
+                    )
+                }
+                HorizontalDivider()
+                DropdownMenuItem(
+                    text = { Text("Create workspace") },
+                    leadingIcon = { Icon(FeatherIcons.Plus, contentDescription = null) },
+                    onClick = { workspaceMenuExpanded = false; showCreateWorkspace = true }
+                )
             }
         }
 
@@ -288,7 +343,7 @@ private fun ConversationSidebar(
                         }
                         Box {
                             IconButton(onClick = { showMenu = true }) {
-                                Text("\u22EE", fontSize = 18.sp)
+                                Icon(FeatherIcons.MoreVertical, contentDescription = "Conversation actions")
                             }
                             DropdownMenu(
                                 expanded = showMenu,
@@ -328,7 +383,40 @@ private fun ConversationSidebar(
                 }
             )
         }
+
+        if (showCreateWorkspace) {
+            CreateWorkspaceDialog(
+                onDismiss = { showCreateWorkspace = false },
+                onCreate = { name, prompt ->
+                    onCreateWorkspace(name, prompt)
+                    showCreateWorkspace = false
+                }
+            )
+        }
     }
+}
+
+@Composable
+private fun CreateWorkspaceDialog(
+    onDismiss: () -> Unit,
+    onCreate: (String, String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var prompt by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("New workspace") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true)
+                OutlinedTextField(prompt, { prompt = it }, label = { Text("Workspace instruction") }, minLines = 3)
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onCreate(name, prompt) }, enabled = name.isNotBlank()) { Text("Create") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
 }
 
 @Composable
@@ -438,8 +526,8 @@ private fun ChatInputBar(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 2.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
-                TextButton(onClick = onRegenerate) { Text("\u21BB", fontSize = 14.sp) }
-                TextButton(onClick = onContinue) { Text("\u25B6", fontSize = 14.sp) }
+                TextButton(onClick = onRegenerate) { Icon(FeatherIcons.RefreshCw, "Regenerate", modifier = Modifier.size(17.dp)) }
+                TextButton(onClick = onContinue) { Text("Continue", fontSize = 14.sp) }
             }
         }
 
@@ -454,7 +542,7 @@ private fun ChatInputBar(
                     onClick = onSend,
                     enabled = enabled && text.isNotBlank() && !isStreaming
                 ) {
-                    Text("\u27A4", fontSize = 18.sp)
+                    Icon(FeatherIcons.Send, contentDescription = "Send")
                 }
             },
             shape = RoundedCornerShape(20.dp),

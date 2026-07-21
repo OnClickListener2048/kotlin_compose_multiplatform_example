@@ -76,6 +76,12 @@ CREATE TABLE FileAsset (
     createdAt INTEGER NOT NULL
 );
 
+CREATE TABLE AppSetting (
+    key TEXT NOT NULL PRIMARY KEY,
+    value TEXT NOT NULL,
+    updatedAt INTEGER NOT NULL
+);
+
 selectAllOrderedByTime:
 SELECT * FROM ChatItem WHERE conversationId = :conversationId ORDER BY createdAt ASC;
 
@@ -215,3 +221,9 @@ VALUES (:id, :workspaceId, :conversationId, :displayName, :mimeType, :localPath,
 
 deleteFileAsset:
 DELETE FROM FileAsset WHERE id = :id;
+
+selectAppSetting:
+SELECT * FROM AppSetting WHERE key = :key;
+
+upsertAppSetting:
+INSERT OR REPLACE INTO AppSetting(key, value, updatedAt) VALUES (:key, :value, :updatedAt);

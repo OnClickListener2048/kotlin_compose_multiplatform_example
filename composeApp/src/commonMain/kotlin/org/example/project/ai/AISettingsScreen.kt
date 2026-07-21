@@ -45,6 +45,8 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import org.example.project.chat.ProviderType
 import org.example.project.repo.ApiKeyRepository
 import org.example.project.repo.ApiKeyInfo
+import org.example.project.feature.settings.SettingsRepository
+import org.example.project.feature.settings.ThemeMode
 import org.koin.compose.koinInject
 
 class AISettingsScreen : Screen {
@@ -54,7 +56,9 @@ class AISettingsScreen : Screen {
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val apiKeyRepo = koinInject<ApiKeyRepository>()
+        val settingsRepo = koinInject<SettingsRepository>()
         var keys by remember { mutableStateOf(apiKeyRepo.getAllKeys()) }
+        var themeMode by remember { mutableStateOf(settingsRepo.themeMode.value) }
         var showAddDialog by remember { mutableStateOf(false) }
         var showDeleteDialog by remember { mutableStateOf<ApiKeyInfo?>(null) }
 
@@ -65,7 +69,7 @@ class AISettingsScreen : Screen {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("API Key Settings") },
+                    title = { Text("Settings") },
                     navigationIcon = {
                         IconButton(onClick = { navigator.pop() }) {
                             Text("\u2190", fontWeight = FontWeight.Bold)
@@ -80,6 +84,37 @@ class AISettingsScreen : Screen {
             Column(
                 modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)
             ) {
+                Text("Appearance", style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.height(8.dp))
+                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Text("Theme", fontWeight = FontWeight.Medium)
+                        Spacer(Modifier.height(6.dp))
+                        Row {
+                            ThemeMode.entries.forEach { mode ->
+                                TextButton(
+                                    onClick = {
+                                        themeMode = mode
+                                        settingsRepo.setThemeMode(mode)
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(
+                                        text = when (mode) {
+                                            ThemeMode.SYSTEM -> "System"
+                                            ThemeMode.LIGHT -> "Light"
+                                            ThemeMode.DARK -> "Dark"
+                                        },
+                                        color = if (themeMode == mode) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(20.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween

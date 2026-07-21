@@ -20,6 +20,7 @@ import org.example.project.feature.model.ChatProviderModelGateway
 import org.example.project.feature.model.ModelGateway
 import org.example.project.feature.prompt.PromptTemplateRepository
 import org.example.project.feature.workspace.WorkspaceRepository
+import org.example.project.feature.settings.SettingsRepository
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
 import org.koin.core.module.Module
@@ -58,6 +59,7 @@ val sharedModule = module {
     single { MemoryRepository(get()) }
     single { PromptTemplateRepository(get()) }
     single { FileAssetRepository(get()) }
+    single { SettingsRepository(get()) }
 
     single<ChatProvider> {
         println("OpenAICompatibleProvider")
