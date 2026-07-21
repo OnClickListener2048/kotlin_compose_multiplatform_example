@@ -8,18 +8,8 @@ import com.watson.database.WatsonDatabase
 actual class DatabaseDriverFactory(private val context: Context) {
     actual fun createDriver(): SqlDriver {
         val name = "app.db"
-
-        val dbFile = context.getDatabasePath(name)
-        if (dbFile.exists()) {
-            val db = android.database.sqlite.SQLiteDatabase.openDatabase(
-                dbFile.absolutePath, null, android.database.sqlite.SQLiteDatabase.OPEN_READONLY
-            )
-            val version = db.use { it.version }
-            if (version.toLong() != WatsonDatabase.Schema.version) {
-                context.deleteDatabase(name)
-            }
-        }
-
+        // AndroidSqliteDriver invokes WatsonDatabase.Schema.migrate on upgrade.
+        // Keeping the database preserves conversations while features evolve.
         return AndroidSqliteDriver(WatsonDatabase.Companion.Schema, context, name)
     }
 }
