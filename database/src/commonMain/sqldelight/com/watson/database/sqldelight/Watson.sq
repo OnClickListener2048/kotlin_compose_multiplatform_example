@@ -72,6 +72,7 @@ CREATE TABLE FileAsset (
     id TEXT NOT NULL PRIMARY KEY,
     workspaceId TEXT,
     conversationId TEXT,
+    messageId TEXT,
     displayName TEXT NOT NULL,
     mimeType TEXT NOT NULL,
     localPath TEXT NOT NULL,
@@ -218,9 +219,18 @@ DELETE FROM PromptTemplate WHERE id = :id;
 selectFilesForConversation:
 SELECT * FROM FileAsset WHERE conversationId = :conversationId ORDER BY createdAt ASC;
 
+selectPendingFilesForConversation:
+SELECT * FROM FileAsset
+WHERE conversationId = :conversationId AND messageId IS NULL
+ORDER BY createdAt ASC;
+
 insertFileAsset:
-INSERT INTO FileAsset(id, workspaceId, conversationId, displayName, mimeType, localPath, sizeBytes, createdAt)
-VALUES (:id, :workspaceId, :conversationId, :displayName, :mimeType, :localPath, :sizeBytes, :createdAt);
+INSERT INTO FileAsset(id, workspaceId, conversationId, messageId, displayName, mimeType, localPath, sizeBytes, createdAt)
+VALUES (:id, :workspaceId, :conversationId, :messageId, :displayName, :mimeType, :localPath, :sizeBytes, :createdAt);
+
+assignPendingFilesToMessage:
+UPDATE FileAsset SET messageId = :messageId
+WHERE conversationId = :conversationId AND messageId IS NULL;
 
 deleteFileAsset:
 DELETE FROM FileAsset WHERE id = :id;

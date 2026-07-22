@@ -76,7 +76,8 @@ The application shell uses Decompose as its primary routing framework. Feature s
 - [x] Summary-memory service (configured at 500 messages)
 - [x] KMP Markdown rendering for assistant responses (GFM, tables, code blocks, and links)
 - [x] Mobile-first chat and Markdown typography
-- [ ] Image, file, tool-result and thinking message renderers; edit/retry controls
+- [x] Image previews and file cards preserved with their sent message
+- [ ] Tool-result and thinking message renderers; edit/retry controls
 - [ ] File content extraction, OCR, vision and RAG indexing
 - [ ] Knowledge, tools/MCP, and agent execution (V2)
 
@@ -90,7 +91,7 @@ Platform-owned strings remain in their native locations. Android's app label is 
 
 Message role and message content are separate concerns. `ChatItemType` identifies the sender (`Question` or `Answer`), while `MessageContentType` identifies the body (`Text`, `Markdown`, `Image`, `File`, `ToolResult`, or `Thinking`). The primary content type is persisted in `ChatItem.contentType` (database migration 4) and dispatched to a renderer in the Compose chat layer.
 
-This first implementation stores user input as `Text` and streamed model output as `Markdown`, rendered by `com.mikepenz:multiplatform-markdown-renderer-m3` 0.37.0—a Compose Multiplatform library with Android, JVM Desktop, and iOS targets. Images and PDFs will use the existing portable `FileAsset` pipeline, then gain message-part references and dedicated renderers without changing streaming, conversation history, or model-provider flows.
+User input is stored as `Text` and streamed model output as `Markdown`, rendered by `com.mikepenz:multiplatform-markdown-renderer-m3` 0.37.0—a Compose Multiplatform library with Android, JVM Desktop, and iOS targets. Attachments are persisted separately in `FileAsset`: pending assets have no `messageId`, and are assigned to the user message when it is sent. The chat history groups assets by that ID, rendering images with the KMP FileKit/Coil integration and other files as compact cards. This keeps attachments attached to the correct message after reopening a conversation without changing streaming, history, or model-provider flows.
 
 ## Quality Gates
 

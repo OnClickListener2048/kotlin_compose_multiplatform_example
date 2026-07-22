@@ -9,6 +9,7 @@ data class FileAsset(
     val id: String,
     val workspaceId: String?,
     val conversationId: String?,
+    val messageId: String?,
     val displayName: String,
     val mimeType: String,
     val localPath: String,
@@ -23,6 +24,9 @@ class FileAssetRepository(private val queries: WatsonQueries) {
     fun forConversation(conversationId: String): List<FileAsset> =
         queries.selectFilesForConversation(conversationId).executeAsList().map { it.toFileAsset() }
 
+    fun pendingForConversation(conversationId: String): List<FileAsset> =
+        queries.selectPendingFilesForConversation(conversationId).executeAsList().map { it.toFileAsset() }
+
     @OptIn(ExperimentalUuidApi::class)
     fun attach(
         displayName: String,
@@ -30,11 +34,22 @@ class FileAssetRepository(private val queries: WatsonQueries) {
         localPath: String,
         sizeBytes: Long,
         workspaceId: String?,
-        conversationId: String?
+        conversationId: String?,
+        messageId: String? = null
     ): FileAsset {
-        val asset = FileAsset(Uuid.random().toString(), workspaceId, conversationId, displayName, mimeType, localPath, sizeBytes, now())
-        queries.insertFileAsset(asset.id, asset.workspaceId, asset.conversationId, asset.displayName, asset.mimeType, asset.localPath, asset.sizeBytes, asset.createdAt)
+        val asset = FileAsset(
+            Uuid.random().toString(), workspaceId, conversationId, messageId,
+            displayName, mimeType, localPath, sizeBytes, now()
+        )
+        queries.insertFileAsset(
+            asset.id, asset.workspaceId, asset.conversationId, asset.messageId,
+            asset.displayName, asset.mimeType, asset.localPath, asset.sizeBytes, asset.createdAt
+        )
         return asset
+    }
+
+    fun assignPendingToMessage(conversationId: String, messageId: String) {
+        queries.assignPendingFilesToMessage(messageId = messageId, conversationId = conversationId)
     }
 
     fun delete(id: String) = queries.deleteFileAsset(id)
@@ -44,6 +59,7 @@ private fun com.watson.database.sqldelight.FileAsset.toFileAsset() = FileAsset(
     id = id,
     workspaceId = workspaceId,
     conversationId = conversationId,
+    messageId = messageId,
     displayName = displayName,
     mimeType = mimeType,
     localPath = localPath,

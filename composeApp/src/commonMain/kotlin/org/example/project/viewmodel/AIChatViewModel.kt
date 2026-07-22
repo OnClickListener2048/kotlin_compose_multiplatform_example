@@ -40,6 +40,7 @@ data class ChatScreenState(
     val workspaces: List<Workspace> = emptyList(),
     val currentWorkspaceId: String = INBOX_WORKSPACE_ID,
     val attachments: List<FileAsset> = emptyList(),
+    val messageAttachments: Map<String, List<FileAsset>> = emptyMap(),
     val messages: List<ChatItem> = emptyList(),
     val currentConversationId: String? = null,
     val isStreaming: Boolean = false,
@@ -100,6 +101,7 @@ class AIChatViewModel(
             currentConversationId = null,
             messages = emptyList(),
             attachments = emptyList(),
+            messageAttachments = emptyMap(),
             inputText = ""
         )
         loadConversations()
@@ -170,6 +172,7 @@ class AIChatViewModel(
             currentConversationId = conversation.id,
             messages = emptyList(),
             attachments = emptyList(),
+            messageAttachments = emptyMap(),
             inputText = ""
         )
         loadConversations()
@@ -177,10 +180,14 @@ class AIChatViewModel(
 
     fun selectConversation(conversationId: String) {
         val messages = chatRepository.getMessages(conversationId)
+        val assets = fileAssetRepository.forConversation(conversationId)
         _state.value = _state.value.copy(
             currentConversationId = conversationId,
             messages = messages,
-            attachments = fileAssetRepository.forConversation(conversationId),
+            attachments = assets.filter { it.messageId == null },
+            messageAttachments = assets
+                .filter { it.messageId != null }
+                .groupBy { it.messageId!! },
             inputText = ""
         )
     }
@@ -198,18 +205,19 @@ class AIChatViewModel(
             workspaceId = _state.value.currentWorkspaceId,
             conversationId = conversationId
         )
-        _state.value = _state.value.copy(attachments = fileAssetRepository.forConversation(conversationId))
+        _state.value = _state.value.copy(attachments = fileAssetRepository.pendingForConversation(conversationId))
     }
 
     fun removeAttachment(id: String) {
         fileAssetRepository.delete(id)
         val conversationId = _state.value.currentConversationId ?: return
-        _state.value = _state.value.copy(attachments = fileAssetRepository.forConversation(conversationId))
+        _state.value = _state.value.copy(attachments = fileAssetRepository.pendingForConversation(conversationId))
     }
 
     fun sendMessage() {
         val text = _state.value.inputText.trim()
-        if (text.isBlank() || _state.value.isStreaming) return
+        val pendingAttachments = _state.value.attachments
+        if ((text.isBlank() && pendingAttachments.isEmpty()) || _state.value.isStreaming) return
 
         val config = _state.value.activeConfig ?: run {
             screenModelScope.launch { _toastEvents.emit("Please configure an API key first") }
@@ -228,15 +236,18 @@ class AIChatViewModel(
 
         val userMsg = chatRepository.insertMessage(
             conversationId = conversationId,
-            content = text,
+            content = text.ifBlank { "Please analyze the attached file." },
             type = ChatItemType.Question,
             contentType = MessageContentType.Text
         )
+        fileAssetRepository.assignPendingToMessage(conversationId, userMsg.id)
         val messages = _state.value.messages + userMsg
         _state.value = _state.value.copy(
             currentConversationId = conversationId,
             inputText = "",
-            messages = messages
+            messages = messages,
+            attachments = emptyList(),
+            messageAttachments = _state.value.messageAttachments + (userMsg.id to pendingAttachments)
         )
         loadConversations()
         streamChat(conversationId, messages)
@@ -441,7 +452,12 @@ class AIChatViewModel(
         val conv = chatRepository.getConversationById(conversationId) ?: return
         chatRepository.toggleConversationArchive(conversationId, !conv.isArchived)
         if (conv.id == _state.value.currentConversationId && !conv.isArchived) {
-            _state.value = _state.value.copy(currentConversationId = null, messages = emptyList())
+            _state.value = _state.value.copy(
+                currentConversationId = null,
+                messages = emptyList(),
+                attachments = emptyList(),
+                messageAttachments = emptyMap()
+            )
         }
         loadConversations()
     }
@@ -449,7 +465,12 @@ class AIChatViewModel(
     fun deleteConversation(conversationId: String) {
         chatRepository.deleteConversation(conversationId)
         if (conversationId == _state.value.currentConversationId) {
-            _state.value = _state.value.copy(currentConversationId = null, messages = emptyList())
+            _state.value = _state.value.copy(
+                currentConversationId = null,
+                messages = emptyList(),
+                attachments = emptyList(),
+                messageAttachments = emptyMap()
+            )
         }
         loadConversations()
     }

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -62,6 +63,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
@@ -83,6 +85,8 @@ import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.size
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.coil.AsyncImage as FileKitAsyncImage
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ChevronDown
 import compose.icons.feathericons.Folder
@@ -224,6 +228,7 @@ class AIChatScreen {
                     } else {
                         ChatMessagesArea(
                             messages = state.messages,
+                            messageAttachments = state.messageAttachments,
                             isStreaming = state.isStreaming,
                             modifier = Modifier.weight(1f)
                         )
@@ -530,6 +535,7 @@ private fun CreateWorkspaceDialog(
 @Composable
 private fun ChatMessagesArea(
     messages: List<org.example.project.repo.ChatItem>,
+    messageAttachments: Map<String, List<FileAsset>>,
     isStreaming: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -553,7 +559,8 @@ private fun ChatMessagesArea(
                 ChatBubble(
                     msg = msg,
                     showThinking = isStreaming && msg.id == messages.lastOrNull()?.id,
-                    compactLayout = compactLayout
+                    compactLayout = compactLayout,
+                    attachments = messageAttachments[msg.id].orEmpty()
                 )
             }
             item { Spacer(Modifier.height(4.dp)) }
@@ -565,7 +572,8 @@ private fun ChatMessagesArea(
 private fun ChatBubble(
     msg: org.example.project.repo.ChatItem,
     showThinking: Boolean,
-    compactLayout: Boolean
+    compactLayout: Boolean,
+    attachments: List<FileAsset>
 ) {
     val isQuestion = msg.type == ChatItemType.Question
     val avatarSize = if (compactLayout) 24.dp else 28.dp
@@ -613,6 +621,10 @@ private fun ChatBubble(
                         )
                     }
                 }
+                if (attachments.isNotEmpty()) {
+                    Spacer(Modifier.height(8.dp))
+                    MessageAttachments(attachments)
+                }
                 if (msg.isLoading || (!isQuestion && showThinking)) {
                     Spacer(Modifier.height(4.dp))
                     ThinkingIndicator()
@@ -628,6 +640,43 @@ private fun ChatBubble(
                 contentAlignment = Alignment.Center
             ) {
                 Text("U", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MessageAttachments(attachments: List<FileAsset>) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        attachments.forEach { asset ->
+            if (asset.mimeType.startsWith("image/", ignoreCase = true)) {
+                FileKitAsyncImage(
+                    file = PlatformFile(asset.localPath),
+                    contentDescription = asset.displayName,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 280.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                )
+            } else {
+                Card(
+                    shape = RoundedCornerShape(10.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(FeatherIcons.Paperclip, contentDescription = null, modifier = Modifier.size(15.dp))
+                        Spacer(Modifier.width(7.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(asset.displayName, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+                            Text(asset.mimeType, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
             }
         }
     }
@@ -718,7 +767,10 @@ private fun ChatInputBar(
                         IconButton(onClick = onAttach, enabled = enabled && !isStreaming) {
                             Icon(FeatherIcons.Paperclip, stringResource(Res.string.attach_file))
                         }
-                        IconButton(onClick = onSend, enabled = enabled && text.isNotBlank() && !isStreaming) {
+                        IconButton(
+                            onClick = onSend,
+                            enabled = enabled && (text.isNotBlank() || attachments.isNotEmpty()) && !isStreaming
+                        ) {
                             Icon(FeatherIcons.Send, stringResource(Res.string.send))
                         }
                     }

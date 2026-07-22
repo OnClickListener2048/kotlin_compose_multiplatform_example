@@ -76,7 +76,8 @@ composeApp           # Compose Multiplatform 应用壳
 - [x] 摘要记忆服务（默认每 500 条消息触发）
 - [x] 助手 Markdown 渲染（GFM、表格、代码块、链接）
 - [x] 移动优先的聊天与 Markdown 字号
-- [ ] 图片、文件、工具结果、思考消息渲染器，以及编辑/重试
+- [x] 随已发送消息保留的图片预览与文件卡片
+- [ ] 工具结果、思考消息渲染器，以及编辑/重试
 - [ ] 文件内容提取、OCR、Vision 与 RAG 索引
 - [ ] Knowledge、Tool/MCP、Agent 执行（V2）
 
@@ -90,7 +91,7 @@ Compose 界面的可见文案不再内嵌在 Kotlin 代码中：英文位于 `co
 
 消息角色与消息内容类型相互独立。`ChatItemType` 标识发送方（`Question` 或 `Answer`），`MessageContentType` 标识正文载体（`Text`、`Markdown`、`Image`、`File`、`ToolResult`、`Thinking`）。主要内容类型持久化在 `ChatItem.contentType` 中（数据库迁移 4），Compose 聊天层按该类型分发到对应渲染器。
 
-当前第一步将用户输入保存为 `Text`，将流式模型输出保存为 `Markdown`，并使用 `com.mikepenz:multiplatform-markdown-renderer-m3` 0.37.0 渲染。该库具备 Android、JVM Desktop 与 iOS Target。后续图片与 PDF 将复用已有的跨平台 `FileAsset` 管线，再增加消息 Part 关联和独立渲染器；不需要修改会话、流式响应、历史记录或模型 Provider 流程。
+用户输入保存为 `Text`，流式模型输出保存为 `Markdown`，并使用 `com.mikepenz:multiplatform-markdown-renderer-m3` 0.37.0 渲染。该库具备 Android、JVM Desktop 与 iOS Target。附件独立持久化在 `FileAsset`：待发送附件的 `messageId` 为空，发送时会绑定至对应用户消息。聊天历史按该 ID 归组，图片通过 KMP 的 FileKit/Coil 集成展示预览，其他文件以紧凑卡片展示。重新打开会话仍会显示在正确消息下，无需改变流式响应、历史记录或模型 Provider 流程。
 
 ## 代码质量
 
