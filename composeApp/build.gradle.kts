@@ -29,7 +29,7 @@ kotlin {
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "ComposeApp"
+            baseName = "FatAI"
             isStatic = false
             export("io.insert.koin:koin-core")
         }
@@ -194,7 +194,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "ai.assistant.app"
+            packageName = "FatAI"
             packageVersion = "1.0.0"
         }
     }

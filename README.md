@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="assets/branding/ai-assistant-banner.svg" alt="AI Assistant — context-first AI workspace" width="100%" />
+  <img src="assets/branding/fatai-banner.svg" alt="FatAI — context-first AI workspace" width="100%" />
 </p>
 
 <p align="center">
-  <img src="assets/branding/ai-assistant-icon.svg" alt="AI Assistant logo" width="112" />
+  <img src="assets/branding/fatai-icon.svg" alt="FatAI logo" width="112" />
 </p>
 
-<h1 align="center">AI Assistant</h1>
+<h1 align="center">FatAI</h1>
 
 <p align="center">A context-first, modular AI workspace built with Kotlin Multiplatform.</p>
 
@@ -17,7 +17,7 @@
   <a href="README.zh-CN.md">中文文档</a>
 </p>
 
-AI Assistant combines multi-model chat, workspace-scoped context, prompt composition, memory, and file attachments in an architecture designed for future RAG, MCP tools, and agents.
+FatAI combines multi-model chat, workspace-scoped context, prompt composition, memory, and file attachments in an architecture designed for future RAG, MCP tools, and agents.
 
 ## Modular Architecture
 
@@ -57,6 +57,8 @@ composeApp           # Compose Multiplatform application shell
 
 `feature-chat` owns conversation/message persistence; `feature-settings` owns persisted theme preferences.
 
+On first desktop launch, FatAI copies an existing `.ai-assistant/app.db` to `.fatai/app.db` so chat history survives the rename.
+
 The application shell uses Decompose as its primary routing framework. Feature screens receive navigation callbacks from a root component instead of directly controlling a navigator.
 
 ## MVP Status
@@ -79,7 +81,7 @@ The application shell uses Decompose as its primary routing framework. Feature s
 
 ## Brand Assets
 
-The SVG source icon is in `assets/branding/ai-assistant-icon.svg`. Android launcher densities and the iOS 1024 AppIcon are generated from that source, so product surfaces share one visual identity.
+The SVG source icon is in `assets/branding/fatai-icon.svg`. Android launcher densities and the iOS 1024 AppIcon are generated from that source, so product surfaces share one visual identity.
 
 ## Supported Platforms
 
@@ -166,7 +168,7 @@ The SVG source icon is in `assets/branding/ai-assistant-icon.svg`. Android launc
 ├── composeApp/
 │   └── src/
 │       ├── commonMain/kotlin/org/example/project/
-│       │   ├── ai/              # AI Assistant screens
+│       │   ├── ai/              # FatAI screens
 │       │   │   ├── AIChatScreen.kt
 │       │   │   └── AISettingsScreen.kt
 │       │   ├── viewmodel/

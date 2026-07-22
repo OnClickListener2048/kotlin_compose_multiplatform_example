@@ -8,9 +8,15 @@ import java.io.File
 actual class DatabaseDriverFactory {
     actual fun createDriver(): SqlDriver {
         val userHome = System.getProperty("user.home")
-        val dbFolder = File(userHome, ".ai-assistant")
+        val dbFolder = File(userHome, ".fatai")
         if (!dbFolder.exists()) dbFolder.mkdirs()
         val path = File(dbFolder, "app.db").absolutePath
+        val databaseFile = File(path)
+        val legacyDatabase = File(File(userHome, ".ai-assistant"), "app.db")
+
+        if (!databaseFile.exists() && legacyDatabase.exists()) {
+            legacyDatabase.copyTo(databaseFile)
+        }
 
         val driver = JdbcSqliteDriver("jdbc:sqlite:$path")
 

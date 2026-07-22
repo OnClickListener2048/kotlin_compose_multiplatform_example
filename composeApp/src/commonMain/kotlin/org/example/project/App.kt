@@ -10,14 +10,14 @@ import org.example.project.ai.AISettingsScreen
 import org.example.project.di.initKoin
 import org.example.project.navigation.DefaultRootComponent
 import org.example.project.navigation.RootComponent
-import org.example.project.theme.AIAssistantTheme
+import org.example.project.theme.FatAITheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 @Preview
 fun App() {
     val root = remember { DefaultRootComponent(DefaultComponentContext(LifecycleRegistry())) }
-    AIAssistantTheme {
+    FatAITheme {
         Children(stack = root.childStack) { child ->
             when (child.instance) {
                 RootComponent.Child.Chat -> AIChatScreen().Content(onSettings = root::openSettings)

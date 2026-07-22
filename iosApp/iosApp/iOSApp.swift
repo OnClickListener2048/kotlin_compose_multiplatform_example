@@ -1,5 +1,5 @@
 import SwiftUI
-import ComposeApp
+import FatAI
 
 @main
 struct iOSApp: App {

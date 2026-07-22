@@ -32,7 +32,7 @@ private val DarkColors = darkColorScheme(
 )
 
 @Composable
-fun AIAssistantTheme(content: @Composable () -> Unit) {
+fun FatAITheme(content: @Composable () -> Unit) {
     val settings = koinInject<SettingsRepository>()
     val mode by settings.themeMode.collectAsState()
     val dark = when (mode) {

@@ -31,7 +31,7 @@ class SystemPromptProvider : PromptProvider {
     override fun provide(request: ContextRequest) = listOf(
         ChatMessage(
             role = "system",
-            content = "You are AI Assistant. Be accurate, concise, and explicit about uncertainty."
+            content = "You are FatAI. Be accurate, concise, and explicit about uncertainty."
         )
     )
 }

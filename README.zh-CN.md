@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="assets/branding/ai-assistant-banner.svg" alt="AI Assistant — 以 Context 为中心的 AI 工作台" width="100%" />
+  <img src="assets/branding/fatai-banner.svg" alt="FatAI — 以 Context 为中心的 AI 工作台" width="100%" />
 </p>
 
 <p align="center">
-  <img src="assets/branding/ai-assistant-icon.svg" alt="AI Assistant 图标" width="112" />
+  <img src="assets/branding/fatai-icon.svg" alt="FatAI 图标" width="112" />
 </p>
 
-<h1 align="center">AI Assistant</h1>
+<h1 align="center">FatAI</h1>
 
 <p align="center">一个基于 Kotlin Multiplatform 构建、以 Context 为中心的模块化 AI 工作台。</p>
 
@@ -17,7 +17,7 @@
   <a href="README.md">English</a>
 </p>
 
-AI Assistant 将多模型聊天、工作区上下文、提示词组装、记忆与文件附件整合到可扩展架构中，为后续 RAG、MCP 工具和 Agent 打下基础。
+FatAI 将多模型聊天、工作区上下文、提示词组装、记忆与文件附件整合到可扩展架构中，为后续 RAG、MCP 工具和 Agent 打下基础。
 
 ## 模块化架构
 
@@ -57,6 +57,8 @@ composeApp           # Compose Multiplatform 应用壳
 
 `feature-chat` 负责会话与消息持久化；`feature-settings` 负责主题偏好的持久化。
 
+桌面版首次启动时会将旧 `.ai-assistant/app.db` 复制到新的 `.fatai/app.db`，保留原有聊天数据。
+
 应用主路由使用 Decompose。Feature 页面通过根组件传入的导航回调跳转，而不直接控制导航器；后续新增 Workspace、Knowledge、Agent 页面时可作为独立 Child 接入。
 
 ## 第一阶段（MVP）状态
@@ -79,7 +81,7 @@ composeApp           # Compose Multiplatform 应用壳
 
 ## 品牌资源
 
-图标 SVG 源文件位于 `assets/branding/ai-assistant-icon.svg`。Android 各密度启动图标与 iOS 1024 AppIcon 均由该源文件生成，确保产品端视觉一致。
+图标 SVG 源文件位于 `assets/branding/fatai-icon.svg`。Android 各密度启动图标与 iOS 1024 AppIcon 均由该源文件生成，确保产品端视觉一致。
 
 ## KMP 依赖原则
 

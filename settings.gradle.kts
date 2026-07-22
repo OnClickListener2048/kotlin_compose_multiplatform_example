@@ -1,4 +1,4 @@
-rootProject.name = "AIAssistant"
+rootProject.name = "FatAI"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

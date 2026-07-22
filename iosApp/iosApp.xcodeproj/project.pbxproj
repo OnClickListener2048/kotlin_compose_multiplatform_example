@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		029B1EEA17C82964C3F05D94 /* KotlinProject.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KotlinProject.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		029B1EEA17C82964C3F05D94 /* FatAI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FatAI.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -50,7 +50,7 @@
 		302FB4BC764E1360B84A0990 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				029B1EEA17C82964C3F05D94 /* KotlinProject.app */,
+				029B1EEA17C82964C3F05D94 /* FatAI.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -87,8 +87,8 @@
 			name = iosApp;
 			packageProductDependencies = (
 			);
-			productName = iosApp;
-			productReference = 029B1EEA17C82964C3F05D94 /* KotlinProject.app */;
+			productName = FatAI;
+			productReference = 029B1EEA17C82964C3F05D94 /* FatAI.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -315,6 +315,7 @@
 				FRAMEWORK_SEARCH_PATHS = "\"$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)\"";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FatAI;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -344,6 +345,7 @@
 				FRAMEWORK_SEARCH_PATHS = "\"$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)\"";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FatAI;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

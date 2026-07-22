@@ -11,7 +11,7 @@
   <rect width="1600" height="560" rx="32" fill="url(#light)"/>
   <g opacity=".22" stroke="#C9C4FF"><path d="M980 70h500M980 140h500M980 210h500M980 280h500M980 350h500M980 420h500"/><path d="M1030 30v500M1110 30v500M1190 30v500M1270 30v500M1350 30v500M1430 30v500"/></g>
   <g transform="translate(1010 95)"><rect width="346" height="346" rx="92" fill="#776BFA"/><path d="M173 55C84 55 28 119 28 204c0 51 22 93 61 122l-11 65c-2 14 13 24 26 16l61-38c3 0 6 1 8 1 89 0 145-64 145-149S262 55 173 55Z" fill="#F7F6FF"/><path d="M173 123c-43 0-78 33-78 75 0 31 19 56 48 68l-3 27 25-16h8c43 0 78-33 78-75s-35-79-78-79Z" fill="#332987"/><path d="M173 149v108M119 203h108" stroke="#F7F6FF" stroke-width="19" stroke-linecap="round"/></g>
-  <text x="120" y="225" fill="#F8F7FF" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="700">AI Assistant</text>
+  <text x="120" y="225" fill="#F8F7FF" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="700">FatAI</text>
   <text x="124" y="292" fill="#D2CEFF" font-family="Inter, Arial, sans-serif" font-size="28">A modular, context-first AI workspace for Kotlin Multiplatform.</text>
   <g fill="#9C92FF"><circle cx="130" cy="367" r="7"/><circle cx="282" cy="367" r="7"/><circle cx="436" cy="367" r="7"/></g>
   <text x="150" y="375" fill="#E7E4FF" font-family="Inter, Arial, sans-serif" font-size="20">Context Engine</text><text x="302" y="375" fill="#E7E4FF" font-family="Inter, Arial, sans-serif" font-size="20">Workspaces</text><text x="456" y="375" fill="#E7E4FF" font-family="Inter, Arial, sans-serif" font-size="20">Multi-model</text>

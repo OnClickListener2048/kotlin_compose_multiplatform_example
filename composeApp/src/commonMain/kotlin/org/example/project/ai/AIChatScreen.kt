@@ -158,7 +158,7 @@ class AIChatScreen {
                         title = {
                             val convId = state.currentConversationId
                             val title = state.conversations.find { it.id == convId }?.title
-                            Text(title ?: "AI Assistant", maxLines = 1)
+                            Text(title ?: "FatAI", maxLines = 1)
                         },
                         navigationIcon = {
                             IconButton(onClick = { scope.launch { drawerState.open() } }) {
@@ -227,10 +227,10 @@ private fun WelcomeScreen(onNewChat: () -> Unit, providerName: String) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("AI Assistant", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Text("FatAI", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Multi-Provider Chat Client",
+            "Your context-first AI workspace",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
