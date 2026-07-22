@@ -8,264 +8,171 @@
 
 <h1 align="center">FatAI</h1>
 
-<p align="center">A context-first, modular AI workspace built with Kotlin Multiplatform.</p>
+<p align="center">A Kotlin Multiplatform AI workspace built around an explicit context pipeline.</p>
 
 <p align="center">
-  <a href="#supported-platforms">Kotlin Multiplatform</a> ·
-  <a href="#modular-architecture">Context Engine</a> ·
-  <a href="#mvp-status">MVP</a> ·
+  <a href="#module-status">Module status</a> ·
+  <a href="#what-works-today">What works today</a> ·
+  <a href="#context-pipeline">Context pipeline</a> ·
   <a href="README.zh-CN.md">中文文档</a>
 </p>
 
-FatAI combines multi-model chat, workspace-scoped context, prompt composition, memory, and file attachments in an architecture designed for future RAG, MCP tools, and agents.
+FatAI is a work-in-progress AI assistant. The codebase is organized as KMP feature modules so chat, prompts, memory, files, workspaces, models, knowledge, tools, and agents can evolve independently. This document describes what is in the repository today, not the planned end state.
 
-## Modular Architecture
+## Supported targets
 
-> Design principle: Chat is only one context consumer. New capabilities enter through feature contracts and ordered context providers instead of being wired directly into a screen.
+- Android
+- Desktop JVM
+- iOS (`iosArm64` and `iosSimulatorArm64`)
+- A small Ktor server module is present as a sample endpoint; it is not an AI proxy or backend.
 
-The project is being migrated from a single `shared` module to independent KMP modules. Each module exposes only cross-platform contracts from `commonMain`; database drivers, HTTP engines, file access, and UI integrations remain in platform source sets.
+The application UI is Compose Multiplatform. SQLDelight drivers and Ktor engines are supplied from platform source sets, while feature APIs and domain code live in `commonMain`.
 
+## Module status
+
+| Module | Current implementation | Status |
+| --- | --- | --- |
+| `core` | `ChatItemType`, `MessageContentType`, provider types, and shared chat primitives. | Implemented |
+| `database` | SQLDelight schema; Android, JVM, and iOS drivers; migrations through version 5. | Implemented |
+| `feature-chat` | Conversation/message repository: create, list, search, pin, archive, delete, persist and update messages. | Implemented |
+| `feature-prompt` | Ordered `ContextEngine`, system/template/workspace/memory/file/history providers, and prompt-template persistence. | Implemented; no template-management screen yet |
+| `feature-memory` | Global/workspace/conversation memory storage and recall; model-backed summary service at 500 messages. | Implemented; no semantic search or memory-management UI |
+| `feature-model` | `ChatProvider` contract, `ModelGateway`, API-key repository, Ktor clients, and one OpenAI-compatible streaming adapter. | Implemented for OpenAI-compatible endpoints |
+| `feature-files` | Portable attachment metadata, pending-to-message binding, and attachment persistence. | Implemented; content extraction is pending |
+| `feature-workspace` | Default Personal workspace, create/select/update/archive repository operations, workspace instructions. | Implemented; editing/archive UI is pending |
+| `feature-settings` | Persisted system/light/dark theme preference. | Implemented |
+| `feature-knowledge` | Gradle/KMP module scaffold only. | Not implemented |
+| `feature-tools` | Gradle/KMP module scaffold only. | Not implemented |
+| `feature-agent` | Gradle/KMP module scaffold only. | Not implemented |
+| `shared` | Temporary Koin composition and platform bootstrap bridge while migrations are completed. | Compatibility layer; do not add new feature logic |
+| `composeApp` | Decompose root navigation, chat/settings UI, resources, platform entry points, and responsive layouts. | Implemented |
+
+The project includes all planned feature modules, but Knowledge, Tools, and Agent currently contain no domain contracts or runtime behaviour. They are intentionally listed as scaffolds rather than claimed as product features.
+
+## What works today
+
+### Chat and UI
+
+- Responsive Open WebUI-inspired layout: fixed desktop sidebar and mobile navigation drawer.
+- Conversation create, search, pin, archive, delete, and automatic first-message title.
+- SSE streaming, stop generation, regenerate, and continue generation.
+- A streaming “Thinking…” indicator.
+- Assistant Markdown rendering with GFM tables, links, code blocks, and mobile-oriented typography.
+- Decompose stack navigation between Chat and Settings.
+- System, light, and dark themes persisted in `AppSetting`.
+- English and Chinese Compose resources selected from the system locale.
+
+### Files and multimodal message presentation
+
+- FileKit picker for PDF, Office files, Markdown, text, and common image formats.
+- Pending attachments are stored separately, then assigned to the user message on send.
+- Sent images are previewed in chat through FileKit's KMP image integration; non-image attachments render as file cards.
+- Reopening a conversation restores attachments beneath their original message.
+
+Attachments are currently represented in the model context as a file manifest (name, MIME type, and size). The app does **not** yet upload file bytes to providers, extract PDF/text content, perform OCR, or send vision message parts.
+
+### Model access
+
+- Add, activate, and delete API-key configurations with provider, base URL, and model fields.
+- The active configuration is used for streaming chat requests.
+- The implemented transport calls the OpenAI Chat Completions SSE shape: `POST {baseUrl}/chat/completions`.
+
+OpenAI, DeepSeek, OpenRouter, Ollama, and Custom can be configured when their endpoint is OpenAI-compatible. Gemini and Claude currently appear in the provider selector only as configuration presets; dedicated Gemini and Anthropic adapters have **not** been implemented, so those native APIs are not supported yet. API keys are stored in the local SQLDelight database; secure platform key storage is still pending.
+
+## Context pipeline
+
+Every outgoing chat request is assembled by `feature-prompt` in deterministic order:
+
+```text
+System prompt
+  → enabled prompt templates
+  → current workspace instruction
+  → recalled memory
+  → conversation file manifest
+  → most recent 20 chat messages
+  → OpenAI-compatible model gateway
 ```
-core                 # Shared contracts and context primitives
-database             # SQLDelight schema, migrations and platform drivers
-feature-chat         # Conversation and message use cases
-feature-prompt       # Context Engine and prompt providers
-feature-memory       # Recent, summary and long-term memory
-feature-model        # Provider abstractions and model configuration
-feature-files        # File metadata and attachment pipeline
-feature-workspace    # Workspace-scoped context
-feature-settings     # User preferences and themes
-feature-knowledge    # V2: RAG contracts and indexing
-feature-tools        # V2: tool and MCP contracts
-feature-agent        # V2: planning and execution contracts
-composeApp           # Compose Multiplatform application shell
-```
 
-`shared` is a temporary compatibility bridge while existing implementations are migrated module by module. New features must not be added there.
+`PromptProvider` is the extension point. A future RAG provider, MCP tool-result provider, or agent state provider can join the pipeline without coupling itself to the chat screen.
 
-`core` and `database` are already migrated: message/provider primitives live in `core`; the SQLDelight schema, migrations and Android/JVM/iOS database drivers live in `database`.
+### Memory
 
-`feature-model` owns provider contracts, the OpenAI-compatible streaming adapter, API key persistence and platform Ktor engines.
+`MemoryEntry` supports `GLOBAL`, `WORKSPACE`, and `CONVERSATION` scopes plus `FACT` and `SUMMARY` kinds. Recall is a SQL query limited to 20 entries. When a completed conversation reaches exactly 500 messages, `ConversationMemoryService` asks the configured model for a conversation summary and stores it as conversation-scoped memory.
 
-`feature-workspace` owns workspace creation, selection, workspace instructions and the default personal workspace.
+There is no embedding generation, vector database, semantic recall, deduplication, or UI for authoring and reviewing memory yet.
 
-`feature-memory` owns scoped recall and the model-backed conversation summary policy.
+### Multimodal message model
 
-`feature-files` owns portable attachment metadata; platform file pickers stay in the Compose application layer.
+`ChatItemType` identifies the sender (`Question` or `Answer`), while `MessageContentType` identifies the primary body (`Text`, `Markdown`, `Image`, `File`, `ToolResult`, or `Thinking`). `contentType` is persisted on `ChatItem` (migration 4).
 
-`feature-prompt` owns the Context Engine, ordered prompt providers and reusable prompt templates.
-
-`feature-chat` owns conversation/message persistence; `feature-settings` owns persisted theme preferences.
-
-On first desktop launch, FatAI copies an existing `.ai-assistant/app.db` to `.fatai/app.db` so chat history survives the rename.
-
-The application shell uses Decompose as its primary routing framework. Feature screens receive navigation callbacks from a root component instead of directly controlling a navigator.
-
-## MVP Status
-
-- [x] Open WebUI-inspired responsive workspace: persistent desktop sidebar, mobile drawer, centered chat column, model status, and floating composer
-- [x] Streaming chat, stop, regenerate and continue
-- [x] Provider/API key switching and model selection
-- [x] Context Engine: system, template, workspace, memory, file manifest and recent history
-- [x] Workspace-scoped conversations
-- [x] Conversation file attachments (PDF, Office, Markdown, text, and images)
-- [x] Persisted system/light/dark theme
-- [x] English and Chinese UI text that follows the system language
-- [x] Provider-key dialog with a dropdown provider selector and keyboard dismissal actions
-- [x] Streaming “Thinking…” indicator with animation
-- [x] Summary-memory service (configured at 500 messages)
-- [x] KMP Markdown rendering for assistant responses (GFM, tables, code blocks, and links)
-- [x] Mobile-first chat and Markdown typography
-- [x] Image previews and file cards preserved with their sent message
-- [ ] Tool-result and thinking message renderers; edit/retry controls
-- [ ] File content extraction, OCR, vision and RAG indexing
-- [ ] Knowledge, tools/MCP, and agent execution (V2)
-
-## Localization
-
-Visible Compose UI text is stored in Compose Multiplatform resource bundles, not inline in Kotlin: `composeApp/src/commonMain/composeResources/values/strings.xml` for English and `values-zh/strings.xml` for Chinese. Compose selects the bundle from the platform's system language on Android, desktop, and iOS.
-
-Platform-owned strings remain in their native locations. Android's app label is defined in `composeApp/src/androidMain/res/values/strings.xml`, with its Chinese resource in `res/values-zh/strings.xml`. Native iOS string tables are kept in `iosApp/iosApp/{en,zh-Hans}.lproj/`.
-
-## Multimodal Message Architecture
-
-Message role and message content are separate concerns. `ChatItemType` identifies the sender (`Question` or `Answer`), while `MessageContentType` identifies the body (`Text`, `Markdown`, `Image`, `File`, `ToolResult`, or `Thinking`). The primary content type is persisted in `ChatItem.contentType` (database migration 4) and dispatched to a renderer in the Compose chat layer.
-
-User input is stored as `Text` and streamed model output as `Markdown`, rendered by `com.mikepenz:multiplatform-markdown-renderer-m3` 0.37.0—a Compose Multiplatform library with Android, JVM Desktop, and iOS targets. Attachments are persisted separately in `FileAsset`: pending assets have no `messageId`, and are assigned to the user message when it is sent. The chat history groups assets by that ID, rendering images with the KMP FileKit/Coil integration and other files as compact cards. This keeps attachments attached to the correct message after reopening a conversation without changing streaming, history, or model-provider flows.
-
-## Quality Gates
-
-- Detekt is applied to every Gradle module with shared configuration at `config/detekt/detekt.yml`.
-- Kover is applied to `composeApp` for JVM coverage reporting. The coverage report task is available once JVM tests are added; unit tests are intentionally not a delivery gate during the current architecture migration.
-
-## Brand Assets
-
-The SVG source icon is in `assets/branding/fatai-icon.svg`. Android launcher densities and the iOS 1024 AppIcon are generated from that source, so product surfaces share one visual identity.
-
-## Supported Platforms
-
-- Desktop (JVM) via Compose Multiplatform
-- Android via Compose Multiplatform
-- iOS via Compose Multiplatform
-- Server via Ktor
-
-## Supported AI Providers
-
-- OpenAI (GPT-4o, etc.)
-- DeepSeek (deepseek-chat, etc.)
-- Google Gemini (gemini-2.0-flash, etc.)
-- Anthropic Claude (claude-3-5-sonnet, etc.) - ChatProvider interface ready, implementation pending
-- OpenRouter
-- Ollama (local)
-- Custom (any OpenAI-compatible endpoint)
-
-## Features
-
-### Chat
-- Multi-turn conversation with streaming responses
-- Stop generation
-- Regenerate last response
-- Continue generation
-- Conversation list with search, pin, archive, delete
-
-### Multi-Provider
-- Add/Delete/Switch API keys
-- Import/Export API keys
-- Provider-specific base URL and model configuration
-
-### Chat History
-- Search conversations
-- Pin important conversations
-- Archive old conversations
-- Delete conversations
-
-### Database
-- SQLDelight for persistent storage
-- Conversation table (id, title, providerType, model, timestamps, pin/archive flags)
-- ChatItem table (message storage with conversation association)
-- ApiKey table (secure storage with provider configuration)
+`FileAsset` is the attachment sidecar. New attachments have a null `messageId`; on send, migration 5's `messageId` column binds them to the newly created user message. The UI groups assets by this ID, so image previews and file cards remain associated with the correct chat bubble. Only `Text` user input and `Markdown` assistant output are produced by the current chat flow; the other content types are reserved for later renderers.
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────┐
-│                  composeApp                      │
-│  ┌──────────┐  ┌──────────────┐  ┌───────────┐ │
-│  │AIChat-   │  │AISettings-   │  │LoginPage  │ │
-│  │Screen    │  │Screen        │  │           │ │
-│  └────┬─────┘  └──────┬───────┘  └───────────┘ │
-│       │               │                         │
-│  ┌────┴───────────────┴──────────────────────┐  │
-│  │          AIChatViewModel                   │  │
-│  └────────────────┬──────────────────────────┘  │
-└───────────────────┼─────────────────────────────┘
-                    │
-┌───────────────────┼─────────────────────────────┐
-│               shared                             │
-│  ┌────────────────┴──────────────────────────┐  │
-│  │          ChatProvider (interface)          │  │
-│  │  ┌──────────────────────────────────┐     │  │
-│  │  │ OpenAICompatibleProvider          │     │  │
-│  │  │ (OpenAI, DeepSeek, OpenRouter,   │     │  │
-│  │  │  Ollama, Custom)                 │     │  │
-│  │  └──────────────────────────────────┘     │  │
-│  └────────────────┬──────────────────────────┘  │
-│                   │                              │
-│  ┌────────────────┴──────────────────────────┐  │
-│  │  ChatRepository    ApiKeyRepository       │  │
-│  └────────────────┬──────────────────────────┘  │
-│                   │                              │
-│  ┌────────────────┴──────────────────────────┐  │
-│  │          WatsonDatabase (SQLDelight)       │  │
-│  └───────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────┘
+```text
+composeApp (Compose UI, Decompose root, responsive screens)
+        │
+        ├── shared (temporary Koin wiring and platform bootstrap)
+        │      ├── feature-chat / feature-model / feature-prompt
+        │      ├── feature-memory / feature-files / feature-workspace
+        │      └── feature-settings
+        │
+        ├── core (shared primitives)
+        └── database (SQLDelight schema, migrations, platform drivers)
+
+feature-knowledge / feature-tools / feature-agent
+        └── KMP scaffolds reserved for V2 implementation
 ```
 
-## Project Structure
+`composeApp` is the application shell, not a feature module. Feature data and use cases are kept out of UI code where possible, but Koin composition remains in `shared` while the historical shared module is retired. New domain behaviour should go to the corresponding `feature-*` module.
 
-```
-├── composeApp/
-│   └── src/
-│       ├── commonMain/kotlin/org/example/project/
-│       │   ├── ai/              # FatAI screens
-│       │   │   ├── AIChatScreen.kt
-│       │   │   └── AISettingsScreen.kt
-│       │   ├── viewmodel/
-│       │   │   └── AIChatViewModel.kt
-│       │   ├── di/
-│       │   │   └── appModule.kt
-│       │   ├── components/
-│       │   │   └── CommonTopAppBar.kt
-│       │   ├── App.kt
-│       │   └── LoginPage.kt
-│       ├── androidMain/          # Android entry
-│       ├── iosMain/              # iOS entry
-│       └── jvmMain/              # Desktop entry
-├── shared/
-│   └── src/
-│       └── commonMain/
-│           ├── kotlin/org/example/project/
-│           │   ├── chat/         # Provider abstraction
-│           │   │   ├── ChatProvider.kt
-│           │   │   ├── ChatMessage.kt
-│           │   │   ├── ProviderType.kt
-│           │   │   └── OpenAICompatibleProvider.kt
-│           │   ├── repo/         # Repositories
-│           │   │   ├── ChatRepository.kt
-│           │   │   └── ApiKeyRepository.kt
-│           │   ├── database/     # Database
-│           │   │   └── DatabaseModule.kt
-│           │   ├── bean/         # Data classes
-│           │   ├── di/           # DI modules
-│           │   └── network/      # HTTP client
-│           └── sqldelight/       # SQLDelight schema
-│               └── Watson.sq
-├── server/                       # Ktor server
-└── iosApp/                       # iOS Xcode project
-```
+## Localization and branding
 
-## Build and Run
+Compose UI strings are in:
 
-### Desktop (JVM)
+- English: `composeApp/src/commonMain/composeResources/values/strings.xml`
+- Chinese: `composeApp/src/commonMain/composeResources/values-zh/strings.xml`
+
+Android's app name remains in Android resources under `composeApp/src/androidMain/res/values*`. The native iOS string tables live in `iosApp/iosApp/{en,zh-Hans}.lproj/`. Brand sources are `assets/branding/fatai-icon.svg` and `assets/branding/fatai-banner.svg`.
+
+## Persistence
+
+SQLDelight stores conversations, messages, provider configurations, workspaces, memory entries, prompt templates, file assets, and app settings. Desktop stores the database at `~/.fatai/app.db` and copies a legacy `~/.ai-assistant/app.db` on first launch when available. Android and iOS use their platform SQLDelight drivers.
+
+## Build and run
+
 ```shell
+# Desktop
 ./gradlew :composeApp:run
-```
 
-### Server
-```shell
+# Android APK
+./gradlew :composeApp:assembleDebug
+
+# Compile checks used for the KMP application
+./gradlew :composeApp:compileKotlinJvm
+./gradlew :composeApp:compileDebugKotlinAndroid
+./gradlew :composeApp:compileKotlinIosSimulatorArm64
+
+# Sample Ktor server
 ./gradlew :server:run
 ```
 
-### Android
-```shell
-./gradlew :composeApp:assembleDebug
-```
+Open `iosApp/` in Xcode to run the iOS app.
 
-### iOS
-Open `iosApp/` in Xcode and run.
+## Quality gates
 
-## Configuration
+- Detekt is applied to every Gradle subproject using `config/detekt/detekt.yml`.
+- Kover is applied to `composeApp` for JVM coverage reporting.
+- Tests exist only as minimal scaffolding and are not currently a delivery gate; compilation checks are the primary verification step during the architecture migration.
 
-### Adding an API Key
-1. Launch the app
-2. Navigate to Settings from the sidebar
-3. Click "+ Add Key"
-4. Select your provider (OpenAI, DeepSeek, Gemini, etc.)
-5. Enter your API key, customize base URL and model if needed
-6. The key will be set as active automatically
+## Key dependencies
 
-### Using a Custom Provider
-Select "Custom" as provider type and enter your own base URL that follows the OpenAI API format (`/v1/chat/completions` endpoint).
-
-## Dependencies
-
-| Category | Library | Version |
-|----------|---------|---------|
-| UI | Compose Multiplatform | 1.9.0 |
-| Language | Kotlin | 2.2.20 |
-| DI | Koin | 4.1.1 |
-| HTTP | Ktor Client | 3.3.1 |
-| DB | SQLDelight | 2.1.0 |
-| Navigation | Voyager | 1.1.0-beta03 |
-| Images | Coil | 3.3.0 |
-| Server | Ktor Server | 3.3.0 |
+| Area | Library |
+| --- | --- |
+| UI | Compose Multiplatform 1.9.0 / Material 3 |
+| Navigation | Decompose 3.3.0 |
+| DI | Koin 4.1.1 |
+| Network | Ktor Client 3.3.1 |
+| Persistence | SQLDelight 2.1.0 |
+| Files and images | FileKit 0.12.0, Coil 3.3.0 |
+| Markdown | multiplatform-markdown-renderer-m3 0.37.0 |

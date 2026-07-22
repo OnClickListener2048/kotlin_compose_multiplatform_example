@@ -8,103 +8,171 @@
 
 <h1 align="center">FatAI</h1>
 
-<p align="center">一个基于 Kotlin Multiplatform 构建、以 Context 为中心的模块化 AI 工作台。</p>
+<p align="center">一个以明确 Context 管线为核心、基于 Kotlin Multiplatform 构建的 AI 工作台。</p>
 
 <p align="center">
-  <a href="#支持平台">Kotlin Multiplatform</a> ·
-  <a href="#模块化架构">Context Engine</a> ·
-  <a href="#第一阶段mvp状态">MVP</a> ·
+  <a href="#模块状态">模块状态</a> ·
+  <a href="#当前可用能力">当前可用能力</a> ·
+  <a href="#上下文管线">Context 管线</a> ·
   <a href="README.md">English</a>
 </p>
 
-FatAI 将多模型聊天、工作区上下文、提示词组装、记忆与文件附件整合到可扩展架构中，为后续 RAG、MCP 工具和 Agent 打下基础。
+FatAI 是一个仍在持续建设中的 AI Assistant。项目采用 KMP Feature Module 划分 Chat、Prompt、Memory、File、Workspace、Model、Knowledge、Tools 与 Agent，使后续能力能够独立演进。本文只描述仓库中已经存在的代码与能力，不把规划功能写成已完成能力。
 
-## 模块化架构
+## 支持目标平台
 
-> 设计原则：Chat 只是 Context 的一个消费者。任何新能力通过 Feature 契约和有序 Context Provider 接入，而不是直接耦合到某个页面。
+- Android
+- Desktop JVM
+- iOS（`iosArm64`、`iosSimulatorArm64`）
+- 项目保留了一个 Ktor Server 示例模块；它不是 AI 代理或 AI 后端。
 
-项目正在从单一 `shared` 模块迁移到真实的 KMP Feature Modules。`commonMain` 只暴露跨平台契约与可复用领域逻辑；数据库驱动、网络引擎、文件访问和 UI 平台实现分别放在 `androidMain`、`jvmMain`、`iosMain` 等平台 Source Set 中。
+应用 UI 使用 Compose Multiplatform。SQLDelight Driver 与 Ktor Engine 分别放在平台 Source Set，领域模型与 Feature API 放在 `commonMain`。
 
+## 模块状态
+
+| 模块 | 当前实现 | 状态 |
+| --- | --- | --- |
+| `core` | `ChatItemType`、`MessageContentType`、Provider 类型和聊天基础模型。 | 已实现 |
+| `database` | SQLDelight Schema、Android/JVM/iOS Driver，以及截至版本 5 的迁移。 | 已实现 |
+| `feature-chat` | 会话与消息仓库：创建、列表、搜索、置顶、归档、删除、消息持久化与更新。 | 已实现 |
+| `feature-prompt` | 有序 `ContextEngine`、系统/模板/工作区/记忆/文件/历史 Provider，以及 Prompt Template 持久化。 | 已实现；暂无模板管理页面 |
+| `feature-memory` | Global/Workspace/Conversation 范围的记忆保存与召回；500 条消息时的模型摘要服务。 | 已实现；暂无语义检索与记忆管理页面 |
+| `feature-model` | `ChatProvider` 契约、`ModelGateway`、API Key 仓库、Ktor Client 与一个 OpenAI-compatible 流式适配器。 | 已实现 OpenAI-compatible Endpoint |
+| `feature-files` | 跨平台附件元数据、待发送附件到消息的绑定与持久化。 | 已实现；内容提取待完成 |
+| `feature-workspace` | 默认 Personal 工作区、创建/选择/更新/归档仓库操作与工作区指令。 | 已实现；编辑与归档 UI 待完成 |
+| `feature-settings` | 跟随系统/浅色/深色主题的持久化。 | 已实现 |
+| `feature-knowledge` | 仅有 Gradle/KMP 模块骨架。 | 未实现 |
+| `feature-tools` | 仅有 Gradle/KMP 模块骨架。 | 未实现 |
+| `feature-agent` | 仅有 Gradle/KMP 模块骨架。 | 未实现 |
+| `shared` | 在迁移期间提供 Koin 装配与平台启动兼容层。 | 兼容层；不要加入新的 Feature 逻辑 |
+| `composeApp` | Decompose 根路由、Chat/Settings UI、资源、平台入口与响应式布局。 | 已实现 |
+
+Knowledge、Tools、Agent 模块已经被纳入项目结构，但当前没有领域契约或运行时实现，因此这里只标注为骨架，不将其表述为产品能力。
+
+## 当前可用能力
+
+### Chat 与界面
+
+- Open WebUI 风格的响应式布局：桌面端固定侧栏，移动端抽屉导航。
+- 会话创建、搜索、置顶、归档、删除，以及首条消息自动生成标题。
+- SSE 流式回复、停止生成、重新生成与续写。
+- 流式请求期间显示带动画的“正在思考”。
+- 助手 Markdown 渲染：GFM 表格、链接、代码块，以及面向手机的字号。
+- 使用 Decompose 在 Chat 与 Settings 间进行栈式导航。
+- `AppSetting` 持久化跟随系统/浅色/深色主题。
+- 英文与中文 Compose 资源随系统语言选择。
+
+### 文件与多模态消息展示
+
+- 通过 FileKit 选择 PDF、Office、Markdown、文本和常见图片格式。
+- 待发送附件单独保存，发送时绑定到对应用户消息。
+- 已发送图片通过 FileKit 的 KMP 图片集成在聊天中预览；非图片附件显示为文件卡片。
+- 重新打开会话后，附件仍会出现在原始消息下。
+
+目前附件只会以文件清单（文件名、MIME Type、大小）加入模型上下文。项目尚未向模型 Provider 上传文件字节、提取 PDF/文本内容、进行 OCR，或发送 Vision Message Part。
+
+### 模型访问
+
+- 添加、激活、删除 API Key 配置，并设置 Provider、Base URL、Model。
+- 当前激活的配置用于流式聊天请求。
+- 已实现的传输层使用 OpenAI Chat Completions SSE 形状：`POST {baseUrl}/chat/completions`。
+
+当 Endpoint 兼容 OpenAI Chat Completions 时，可配置 OpenAI、DeepSeek、OpenRouter、Ollama 和 Custom。Gemini、Claude 当前仅出现在 Provider 下拉选择中作为配置预设；专用 Gemini/Anthropic Adapter 尚未实现，因此并不支持它们的原生 API。API Key 当前保存在本地 SQLDelight 数据库，尚未接入各平台的安全密钥存储。
+
+## 上下文管线
+
+每次发送聊天请求时，`feature-prompt` 会按照固定顺序组装上下文：
+
+```text
+系统提示词
+  → 已启用的 Prompt Template
+  → 当前工作区指令
+  → 召回的记忆
+  → 当前会话的文件清单
+  → 最近 20 条聊天记录
+  → OpenAI-compatible Model Gateway
 ```
-core                 # 跨模块契约、上下文基础模型
-database             # SQLDelight Schema、迁移、平台数据库驱动
-feature-chat         # 会话与消息用例
-feature-prompt       # Context Engine 与 Prompt Provider
-feature-memory       # 最近消息、摘要、长期记忆
-feature-model        # Provider 抽象与模型配置
-feature-files        # 文件元数据与附件管线
-feature-workspace    # 工作区与上下文绑定
-feature-settings     # 用户设置与主题
-feature-knowledge    # V2：RAG 契约与索引
-feature-tools        # V2：工具与 MCP 契约
-feature-agent        # V2：规划与执行契约
-composeApp           # Compose Multiplatform 应用壳
+
+`PromptProvider` 是扩展点。后续的 RAG、MCP 工具结果或 Agent State 都可以以 Provider 的形式接入，无需和聊天页面直接耦合。
+
+### Memory
+
+`MemoryEntry` 支持 `GLOBAL`、`WORKSPACE`、`CONVERSATION` 三个 Scope，以及 `FACT`、`SUMMARY` 两种 Kind。当前通过 SQL 查询最多召回 20 条记忆。会话完成后，如果消息数恰好达到 500 的倍数，`ConversationMemoryService` 会请求当前模型生成摘要并将其保存为 Conversation Scope 的 Memory。
+
+当前没有 Embedding、向量数据库、语义召回、去重机制，也没有记忆的新建、审核和管理界面。
+
+### 多模态消息模型
+
+`ChatItemType` 表示发送方（`Question` 或 `Answer`），`MessageContentType` 表示正文载体（`Text`、`Markdown`、`Image`、`File`、`ToolResult`、`Thinking`）。`ChatItem.contentType` 已持久化（迁移 4）。
+
+`FileAsset` 是消息附件的旁路实体。新附件的 `messageId` 为 null；发送时通过迁移 5 添加的字段绑定到刚创建的用户消息。UI 按 `messageId` 分组，因此图片预览与文件卡片会始终属于正确的聊天气泡。目前聊天流程只会产生用户 `Text` 与助手 `Markdown`；其余内容类型为后续渲染器预留。
+
+## 架构
+
+```text
+composeApp（Compose UI、Decompose 根路由、响应式页面）
+        │
+        ├── shared（临时 Koin 装配与平台启动桥接）
+        │      ├── feature-chat / feature-model / feature-prompt
+        │      ├── feature-memory / feature-files / feature-workspace
+        │      └── feature-settings
+        │
+        ├── core（跨模块基础模型）
+        └── database（SQLDelight Schema、迁移、平台 Driver）
+
+feature-knowledge / feature-tools / feature-agent
+        └── 为 V2 预留的 KMP 骨架
 ```
 
-目前的 `shared` 仅作为迁移兼容层保留。新功能不应继续添加到其中，而应进入对应的 Feature Module。
+`composeApp` 是应用壳，不是 Feature Module。当前 `shared` 仍承担 Koin 装配职责，直至历史 shared 模块完全退出。新增领域行为应放入对应的 `feature-*` 模块。
 
-`core` 和 `database` 已完成迁移：消息/Provider 基础类型位于 `core`，SQLDelight Schema、迁移以及 Android/JVM/iOS 数据库 Driver 位于 `database`。
+## 多语言与品牌资源
 
-`feature-model` 负责 Provider 契约、OpenAI-compatible 流式适配器、API Key 持久化和 Ktor 平台网络引擎。
+Compose 可见文案位于：
 
-`feature-workspace` 负责工作区创建、选择、工作区指令以及默认个人工作区。
+- 英文：`composeApp/src/commonMain/composeResources/values/strings.xml`
+- 中文：`composeApp/src/commonMain/composeResources/values-zh/strings.xml`
 
-`feature-memory` 负责分层记忆召回和基于模型的会话摘要策略。
+Android 应用名称保留在 `composeApp/src/androidMain/res/values*`。iOS 原生字符串表在 `iosApp/iosApp/{en,zh-Hans}.lproj/`。品牌源文件为 `assets/branding/fatai-icon.svg` 与 `assets/branding/fatai-banner.svg`。
 
-`feature-files` 负责跨平台附件元数据；平台文件选择器保留在 Compose 应用层。
+## 数据持久化
 
-`feature-prompt` 负责 Context Engine、有序 Prompt Provider 与可复用提示词模板。
+SQLDelight 保存会话、消息、Provider 配置、工作区、记忆、Prompt Template、文件附件和 App 设置。桌面端数据库位于 `~/.fatai/app.db`；首次启动时如果存在旧的 `~/.ai-assistant/app.db`，会将其复制过来。Android 与 iOS 使用各自的 SQLDelight Driver。
 
-`feature-chat` 负责会话与消息持久化；`feature-settings` 负责主题偏好的持久化。
+## 构建与运行
 
-桌面版首次启动时会将旧 `.ai-assistant/app.db` 复制到新的 `.fatai/app.db`，保留原有聊天数据。
+```shell
+# Desktop
+./gradlew :composeApp:run
 
-应用主路由使用 Decompose。Feature 页面通过根组件传入的导航回调跳转，而不直接控制导航器；后续新增 Workspace、Knowledge、Agent 页面时可作为独立 Child 接入。
+# Android APK
+./gradlew :composeApp:assembleDebug
 
-## 第一阶段（MVP）状态
+# KMP 编译检查
+./gradlew :composeApp:compileKotlinJvm
+./gradlew :composeApp:compileDebugKotlinAndroid
+./gradlew :composeApp:compileKotlinIosSimulatorArm64
 
-- [x] 响应式 Open WebUI 风格聊天工作台：桌面端常驻侧栏、移动端抽屉、居中聊天列、模型状态与悬浮输入框
-- [x] 流式聊天、停止生成、重新生成、续写
-- [x] Provider / API Key 切换和模型选择
-- [x] Context Engine：系统提示词、模板、工作区、记忆、文件清单、最近历史
-- [x] 工作区绑定会话
-- [x] 会话文件附件：PDF、Office、Markdown、文本、图片
-- [x] 主题持久化：跟随系统 / 浅色 / 深色
-- [x] 跟随系统语言的中英文界面文案
-- [x] 提供商下拉选择与支持键盘收起的 API 密钥弹窗
-- [x] 流式请求期间带动画的“正在思考”状态
-- [x] 摘要记忆服务（默认每 500 条消息触发）
-- [x] 助手 Markdown 渲染（GFM、表格、代码块、链接）
-- [x] 移动优先的聊天与 Markdown 字号
-- [x] 随已发送消息保留的图片预览与文件卡片
-- [ ] 工具结果、思考消息渲染器，以及编辑/重试
-- [ ] 文件内容提取、OCR、Vision 与 RAG 索引
-- [ ] Knowledge、Tool/MCP、Agent 执行（V2）
+# Ktor Server 示例
+./gradlew :server:run
+```
 
-## 多语言
+iOS 请使用 Xcode 打开 `iosApp/` 后运行。
 
-Compose 界面的可见文案不再内嵌在 Kotlin 代码中：英文位于 `composeApp/src/commonMain/composeResources/values/strings.xml`，中文位于 `values-zh/strings.xml`。Compose 会根据 Android、桌面端与 iOS 的系统语言自动选择资源包。
+## 质量门禁
 
-平台专属文案仍放在各自原生资源目录。Android 应用名称位于 `composeApp/src/androidMain/res/values/strings.xml`，中文资源位于 `res/values-zh/strings.xml`；iOS 原生字符串表位于 `iosApp/iosApp/{en,zh-Hans}.lproj/`。
+- Detekt 已应用到所有 Gradle 子项目，配置位于 `config/detekt/detekt.yml`。
+- Kover 已应用到 `composeApp`，用于 JVM 覆盖率报告。
+- 当前只有最小测试骨架，尚未将 UT 作为交付门禁；架构迁移阶段以编译检查为主要验证手段。
 
-## 多模态消息架构
+## 关键依赖
 
-消息角色与消息内容类型相互独立。`ChatItemType` 标识发送方（`Question` 或 `Answer`），`MessageContentType` 标识正文载体（`Text`、`Markdown`、`Image`、`File`、`ToolResult`、`Thinking`）。主要内容类型持久化在 `ChatItem.contentType` 中（数据库迁移 4），Compose 聊天层按该类型分发到对应渲染器。
-
-用户输入保存为 `Text`，流式模型输出保存为 `Markdown`，并使用 `com.mikepenz:multiplatform-markdown-renderer-m3` 0.37.0 渲染。该库具备 Android、JVM Desktop 与 iOS Target。附件独立持久化在 `FileAsset`：待发送附件的 `messageId` 为空，发送时会绑定至对应用户消息。聊天历史按该 ID 归组，图片通过 KMP 的 FileKit/Coil 集成展示预览，其他文件以紧凑卡片展示。重新打开会话仍会显示在正确消息下，无需改变流式响应、历史记录或模型 Provider 流程。
-
-## 代码质量
-
-- Detekt 已应用到全部 Gradle 模块，统一配置位于 `config/detekt/detekt.yml`。
-- Kover 已应用到 `composeApp`，用于 JVM 覆盖率报告。当前架构迁移阶段不把 UT 作为交付阻塞项；补齐 JVM 测试后即可生成覆盖率报告。
-
-## 品牌资源
-
-图标 SVG 源文件位于 `assets/branding/fatai-icon.svg`。Android 各密度启动图标与 iOS 1024 AppIcon 均由该源文件生成，确保产品端视觉一致。
-
-## KMP 依赖原则
-
-- `commonMain` 仅使用 Kotlin Multiplatform 可用的库和接口。
-- Ktor、SQLDelight、Compose、FileKit 等依赖必须选择有 Android、JVM、iOS 实现的版本。
-- 网络 engine、数据库 driver、系统文件路径和剪贴板等能力只能在平台 Source Set 中实现，并通过 `expect/actual` 或接口向上提供。
-- 引入新三方库前，必须确认其 KMP Targets 覆盖本项目已支持的平台。
+| 领域 | 库 |
+| --- | --- |
+| UI | Compose Multiplatform 1.9.0 / Material 3 |
+| 路由 | Decompose 3.3.0 |
+| DI | Koin 4.1.1 |
+| 网络 | Ktor Client 3.3.1 |
+| 持久化 | SQLDelight 2.1.0 |
+| 文件与图片 | FileKit 0.12.0、Coil 3.3.0 |
+| Markdown | multiplatform-markdown-renderer-m3 0.37.0 |
