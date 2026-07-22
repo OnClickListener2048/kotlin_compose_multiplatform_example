@@ -1,10 +1,27 @@
-# AI Assistant - 多模型 AI 助手
+<p align="center">
+  <img src="assets/branding/ai-assistant-banner.svg" alt="AI Assistant — 以 Context 为中心的 AI 工作台" width="100%" />
+</p>
 
-一个基于 Kotlin Multiplatform（KMP）的 AI Assistant。支持流式聊天、多 Provider、工作区、上下文组装、记忆和文件附件。
+<p align="center">
+  <img src="assets/branding/ai-assistant-icon.svg" alt="AI Assistant 图标" width="112" />
+</p>
 
-English documentation: [README.md](README.md)
+<h1 align="center">AI Assistant</h1>
+
+<p align="center">一个基于 Kotlin Multiplatform 构建、以 Context 为中心的模块化 AI 工作台。</p>
+
+<p align="center">
+  <a href="#支持平台">Kotlin Multiplatform</a> ·
+  <a href="#模块化架构">Context Engine</a> ·
+  <a href="#第一阶段mvp状态">MVP</a> ·
+  <a href="README.md">English</a>
+</p>
+
+AI Assistant 将多模型聊天、工作区上下文、提示词组装、记忆与文件附件整合到可扩展架构中，为后续 RAG、MCP 工具和 Agent 打下基础。
 
 ## 模块化架构
+
+> 设计原则：Chat 只是 Context 的一个消费者。任何新能力通过 Feature 契约和有序 Context Provider 接入，而不是直接耦合到某个页面。
 
 项目正在从单一 `shared` 模块迁移到真实的 KMP Feature Modules。`commonMain` 只暴露跨平台契约与可复用领域逻辑；数据库驱动、网络引擎、文件访问和 UI 平台实现分别放在 `androidMain`、`jvmMain`、`iosMain` 等平台 Source Set 中。
 

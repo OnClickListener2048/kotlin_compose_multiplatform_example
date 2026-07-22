@@ -1,0 +1,23 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="80" x2="900" y2="960" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8477FF"/>
+      <stop offset="0.48" stop-color="#5146D9"/>
+      <stop offset="1" stop-color="#241D70"/>
+    </linearGradient>
+    <linearGradient id="orb" x1="340" y1="260" x2="720" y2="750" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7F6FF"/>
+      <stop offset="1" stop-color="#C7C1FF"/>
+    </linearGradient>
+    <filter id="glow" x="172" y="154" width="680" height="720" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="28"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
+  <circle cx="518" cy="505" r="260" fill="#AFA8FF" opacity=".32" filter="url(#glow)"/>
+  <path d="M512 208C343 208 232 326 232 480c0 93 40 168 108 218l-19 113c-4 25 24 42 46 28l117-73c9 1 18 2 28 2 169 0 280-118 280-272S681 208 512 208Z" fill="url(#orb)"/>
+  <path d="M512 314c-81 0-148 62-148 142 0 62 39 111 95 132l-5 45 42-27c5 1 11 1 16 1 81 0 148-62 148-142s-67-151-148-151Z" fill="#332987"/>
+  <path d="M512 362v206M409 465h206" stroke="#F7F6FF" stroke-width="36" stroke-linecap="round"/>
+  <circle cx="731" cy="301" r="30" fill="#FFFFFF"/>
+  <circle cx="786" cy="377" r="14" fill="#D6D2FF"/>
+</svg>

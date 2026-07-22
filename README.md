@@ -1,10 +1,27 @@
-# AI Assistant - Multi-Provider Chat Client
+<p align="center">
+  <img src="assets/branding/ai-assistant-banner.svg" alt="AI Assistant — context-first AI workspace" width="100%" />
+</p>
 
-A Kotlin Multiplatform (KMP) AI Assistant supporting multiple LLM providers with streaming chat, conversation management, and API key management.
+<p align="center">
+  <img src="assets/branding/ai-assistant-icon.svg" alt="AI Assistant logo" width="112" />
+</p>
 
-Chinese documentation: [README.zh-CN.md](README.zh-CN.md)
+<h1 align="center">AI Assistant</h1>
+
+<p align="center">A context-first, modular AI workspace built with Kotlin Multiplatform.</p>
+
+<p align="center">
+  <a href="#supported-platforms">Kotlin Multiplatform</a> ·
+  <a href="#modular-architecture">Context Engine</a> ·
+  <a href="#mvp-status">MVP</a> ·
+  <a href="README.zh-CN.md">中文文档</a>
+</p>
+
+AI Assistant combines multi-model chat, workspace-scoped context, prompt composition, memory, and file attachments in an architecture designed for future RAG, MCP tools, and agents.
 
 ## Modular Architecture
+
+> Design principle: Chat is only one context consumer. New capabilities enter through feature contracts and ordered context providers instead of being wired directly into a screen.
 
 The project is being migrated from a single `shared` module to independent KMP modules. Each module exposes only cross-platform contracts from `commonMain`; database drivers, HTTP engines, file access, and UI integrations remain in platform source sets.
 
