@@ -41,6 +41,7 @@ fun CommonTopAppBar(
     modifier: Modifier = Modifier,
     showNavIcon: Boolean = false,
     navIcon: ImageVector = FeatherIcons.ArrowLeft,
+    navigationContentDescription: String? = null,
     onNavClick: () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
     colors: TopAppBarColors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -64,7 +65,7 @@ fun CommonTopAppBar(
                 IconButton(onClick = onNavClick) {
                     Icon(
                         imageVector = navIcon,
-                        contentDescription = "Navigation Icon" // 建议提供更具描述性的内容
+                        contentDescription = navigationContentDescription
                     )
                 }
             }

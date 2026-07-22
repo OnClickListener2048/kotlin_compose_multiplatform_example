@@ -63,16 +63,24 @@ composeApp           # Compose Multiplatform 应用壳
 
 ## 第一阶段（MVP）状态
 
+- [x] Open WebUI 风格聊天工作台：常驻侧栏、居中聊天列、模型状态与悬浮输入框
 - [x] 流式聊天、停止生成、重新生成、续写
 - [x] Provider / API Key 切换和模型选择
 - [x] Context Engine：系统提示词、模板、工作区、记忆、文件清单、最近历史
 - [x] 工作区绑定会话
 - [x] 会话文件附件：PDF、Office、Markdown、文本、图片
 - [x] 主题持久化：跟随系统 / 浅色 / 深色
+- [x] 跟随系统语言的中英文界面文案
 - [x] 摘要记忆服务（默认每 500 条消息触发）
 - [ ] Markdown 渲染、富消息类型、编辑与重试
 - [ ] 文件内容提取、OCR、Vision 与 RAG 索引
 - [ ] Knowledge、Tool/MCP、Agent 执行（V2）
+
+## 多语言
+
+Compose 界面的可见文案不再内嵌在 Kotlin 代码中：英文位于 `composeApp/src/commonMain/composeResources/values/strings.xml`，中文位于 `values-zh/strings.xml`。Compose 会根据 Android、桌面端与 iOS 的系统语言自动选择资源包。
+
+平台专属文案仍放在各自原生资源目录。Android 应用名称位于 `composeApp/src/androidMain/res/values/strings.xml`，中文资源位于 `res/values-zh/strings.xml`；iOS 原生字符串表位于 `iosApp/iosApp/{en,zh-Hans}.lproj/`。
 
 ## 代码质量
 

@@ -44,6 +44,9 @@ import org.example.project.repo.ApiKeyRepository
 import org.example.project.repo.ApiKeyInfo
 import org.example.project.feature.settings.SettingsRepository
 import org.example.project.feature.settings.ThemeMode
+import fatai.composeapp.generated.resources.Res
+import fatai.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 class AISettingsScreen {
@@ -65,14 +68,14 @@ class AISettingsScreen {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Settings") },
+                    title = { Text(stringResource(Res.string.settings)) },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Text("\u2190", fontWeight = FontWeight.Bold)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        containerColor = MaterialTheme.colorScheme.background
                     )
                 )
             }
@@ -80,11 +83,19 @@ class AISettingsScreen {
             Column(
                 modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)
             ) {
-                Text("Appearance", style = MaterialTheme.typography.titleLarge)
+                Text(stringResource(Res.string.fatai_settings), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(4.dp))
+                Text(stringResource(Res.string.appearance_model_access), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(24.dp))
+                Text(stringResource(Res.string.appearance), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
-                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
                     Column(modifier = Modifier.padding(14.dp)) {
-                        Text("Theme", fontWeight = FontWeight.Medium)
+                        Text(stringResource(Res.string.theme), fontWeight = FontWeight.Medium)
                         Spacer(Modifier.height(6.dp))
                         Row {
                             ThemeMode.entries.forEach { mode ->
@@ -97,9 +108,9 @@ class AISettingsScreen {
                                 ) {
                                     Text(
                                         text = when (mode) {
-                                            ThemeMode.SYSTEM -> "System"
-                                            ThemeMode.LIGHT -> "Light"
-                                            ThemeMode.DARK -> "Dark"
+                                            ThemeMode.SYSTEM -> stringResource(Res.string.system)
+                                            ThemeMode.LIGHT -> stringResource(Res.string.light)
+                                            ThemeMode.DARK -> stringResource(Res.string.dark)
                                         },
                                         color = if (themeMode == mode) MaterialTheme.colorScheme.primary
                                         else MaterialTheme.colorScheme.onSurfaceVariant
@@ -115,9 +126,9 @@ class AISettingsScreen {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("API Keys", style = MaterialTheme.typography.titleLarge)
-                    Button(onClick = { showAddDialog = true }) {
-                        Text("+ Add Key")
+                    Text(stringResource(Res.string.model_providers), style = MaterialTheme.typography.titleMedium)
+                    Button(onClick = { showAddDialog = true }, shape = RoundedCornerShape(9.dp)) {
+                        Text(stringResource(Res.string.add_key))
                     }
                 }
 
@@ -125,7 +136,7 @@ class AISettingsScreen {
 
                 if (keys.isEmpty()) {
                     Text(
-                        "No API keys configured. Add one to get started.",
+                        stringResource(Res.string.no_api_keys),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -140,7 +151,7 @@ class AISettingsScreen {
                                 else
                                     MaterialTheme.colorScheme.surface
                             ),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(14.dp)
                         ) {
                             Row(
                                 modifier = Modifier.padding(16.dp),
@@ -165,7 +176,11 @@ class AISettingsScreen {
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Text(
-                                        "API: ${key.apiKey.take(8)}...${key.apiKey.takeLast(4)}",
+                                        stringResource(
+                                            Res.string.api_key_preview,
+                                            key.apiKey.take(8),
+                                            key.apiKey.takeLast(4)
+                                        ),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -175,12 +190,12 @@ class AISettingsScreen {
                                         apiKeyRepo.setActiveKey(key.id)
                                         refresh()
                                     }) {
-                                        Text("Use")
+                                        Text(stringResource(Res.string.use))
                                     }
                                     Spacer(Modifier.width(8.dp))
                                 }
                                 TextButton(onClick = { showDeleteDialog = key }) {
-                                    Text("Del", color = MaterialTheme.colorScheme.error)
+                                    Text(stringResource(Res.string.delete), color = MaterialTheme.colorScheme.error)
                                 }
                             }
                         }
@@ -203,17 +218,17 @@ class AISettingsScreen {
         if (showDeleteDialog != null) {
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = null },
-                title = { Text("Delete API Key") },
-                text = { Text("Delete \"${showDeleteDialog!!.name}\"? This cannot be undone.") },
+            title = { Text(stringResource(Res.string.delete_api_key)) },
+            text = { Text(stringResource(Res.string.delete_key_confirmation, showDeleteDialog!!.name)) },
                 confirmButton = {
                     TextButton(onClick = {
                         apiKeyRepo.deleteKey(showDeleteDialog!!.id)
                         showDeleteDialog = null
                         refresh()
-                    }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                    }) { Text(stringResource(Res.string.delete), color = MaterialTheme.colorScheme.error) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showDeleteDialog = null }) { Text("Cancel") }
+                    TextButton(onClick = { showDeleteDialog = null }) { Text(stringResource(Res.string.cancel)) }
                 }
             )
         }
@@ -227,18 +242,18 @@ private fun AddApiKeyDialog(
     onAdd: (ProviderType, String, String, String, String) -> Unit
 ) {
     var selectedProvider by remember { mutableStateOf(ProviderType.OpenAI) }
-    var showProviderMenu by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf("") }
     var apiKey by remember { mutableStateOf("") }
     var baseUrl by remember { mutableStateOf(selectedProvider.defaultBaseUrl) }
     var model by remember { mutableStateOf(selectedProvider.defaultModel) }
+    val defaultKeyName = stringResource(Res.string.default_key_name, selectedProvider.displayName)
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add API Key") },
+        title = { Text(stringResource(Res.string.add_api_key)) },
         text = {
             Column {
-                Text("Provider")
+                Text(stringResource(Res.string.provider))
                 OutlinedTextField(
                     value = selectedProvider.displayName,
                     onValueChange = {},
@@ -270,26 +285,26 @@ private fun AddApiKeyDialog(
                 }
 
                 Spacer(Modifier.height(8.dp))
-                Text("Display Name")
+                Text(stringResource(Res.string.display_name))
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("My API Key") }
+                    placeholder = { Text(stringResource(Res.string.my_api_key)) }
                 )
 
                 Spacer(Modifier.height(8.dp))
-                Text("API Key")
+                Text(stringResource(Res.string.api_key))
                 OutlinedTextField(
                     value = apiKey,
                     onValueChange = { apiKey = it },
                     modifier = Modifier.fillMaxWidth(),
                     visualTransformation = PasswordVisualTransformation(),
-                    placeholder = { Text("sk-...") }
+                    placeholder = { Text(stringResource(Res.string.api_key_example)) }
                 )
 
                 Spacer(Modifier.height(8.dp))
-                Text("Base URL")
+                Text(stringResource(Res.string.base_url))
                 OutlinedTextField(
                     value = baseUrl,
                     onValueChange = { baseUrl = it },
@@ -297,7 +312,7 @@ private fun AddApiKeyDialog(
                 )
 
                 Spacer(Modifier.height(8.dp))
-                Text("Model")
+                Text(stringResource(Res.string.model))
                 OutlinedTextField(
                     value = model,
                     onValueChange = { model = it },
@@ -311,7 +326,7 @@ private fun AddApiKeyDialog(
                     if (apiKey.isNotBlank()) {
                         onAdd(
                             selectedProvider,
-                            name.ifBlank { "${selectedProvider.displayName} Key" },
+                            name.ifBlank { defaultKeyName },
                             apiKey,
                             baseUrl.ifBlank { selectedProvider.defaultBaseUrl },
                             model.ifBlank { selectedProvider.defaultModel }
@@ -319,10 +334,10 @@ private fun AddApiKeyDialog(
                     }
                 },
                 enabled = apiKey.isNotBlank()
-            ) { Text("Add") }
+            ) { Text(stringResource(Res.string.add)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
         }
     )
 }

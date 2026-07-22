@@ -68,6 +68,9 @@ import org.example.project.repo.Conversation
 import org.example.project.feature.workspace.Workspace
 import org.example.project.feature.files.FileAsset
 import org.example.project.viewmodel.AIChatViewModel
+import fatai.composeapp.generated.resources.Res
+import fatai.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import io.github.vinceglb.filekit.mimeType
 import io.github.vinceglb.filekit.name
@@ -100,9 +103,10 @@ class AIChatScreen {
         val drawerState = rememberDrawerState(DrawerValue.Closed)
         val scope = rememberCoroutineScope()
         val snackbarHostState = remember { SnackbarHostState() }
+        val attachFileTitle = stringResource(Res.string.attach_file)
         val filePicker = rememberFilePickerLauncher(
             type = FileKitType.File(listOf("pdf", "doc", "docx", "xls", "xlsx", "md", "txt", "png", "jpg", "jpeg", "webp")),
-            title = "Attach file"
+            title = attachFileTitle
         ) { file ->
             if (file != null) {
                 viewModel.attachFile(
@@ -123,7 +127,11 @@ class AIChatScreen {
         ModalNavigationDrawer(
             drawerState = drawerState,
             drawerContent = {
-                ModalDrawerSheet(modifier = Modifier.width(300.dp)) {
+                ModalDrawerSheet(
+                    modifier = Modifier.width(288.dp),
+                    drawerContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    drawerContentColor = MaterialTheme.colorScheme.onSurface
+                ) {
                     ConversationSidebar(
                         conversations = state.conversations.filter { !it.isArchived },
                         workspaces = state.workspaces,
@@ -162,22 +170,21 @@ class AIChatScreen {
                         },
                         navigationIcon = {
                             IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(FeatherIcons.Menu, contentDescription = "Open conversations")
+                                Icon(FeatherIcons.Menu, contentDescription = stringResource(Res.string.open_conversations))
                             }
                         },
                         actions = {
-                            Text(
-                                state.activeProvider.displayName,
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(end = 8.dp)
-                            )
+                            Card(
+                                shape = RoundedCornerShape(8.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                            ) { Text(state.activeProvider.displayName, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp)) }
                             IconButton(onClick = { viewModel.newConversation() }) {
-                                Icon(FeatherIcons.Plus, contentDescription = "New conversation")
+                                Icon(FeatherIcons.Plus, contentDescription = stringResource(Res.string.new_conversation))
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.surface
+                            containerColor = MaterialTheme.colorScheme.background,
+                            scrolledContainerColor = MaterialTheme.colorScheme.background
                         )
                     )
                 }
@@ -227,22 +234,31 @@ private fun WelcomeScreen(onNewChat: () -> Unit, providerName: String) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("FatAI", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Box(
+            modifier = Modifier.size(60.dp).clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.primary),
+            contentAlignment = Alignment.Center
+        ) { Text("F", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold) }
+        Spacer(Modifier.height(20.dp))
+        Text(stringResource(Res.string.welcome_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Your context-first AI workspace",
+            stringResource(Res.string.welcome_provider, providerName),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(Modifier.height(12.dp))
-        Text(
-            "Open the sidebar (\u2630) and go to Settings (\u2699) to configure an API key.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(Modifier.height(24.dp))
-        Button(onClick = onNewChat) {
-            Text("New Chat")
+        Spacer(Modifier.height(28.dp))
+        Card(
+            modifier = Modifier.widthIn(max = 440.dp).fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Column(modifier = Modifier.padding(18.dp)) {
+                Text(stringResource(Res.string.welcome_start_title), fontWeight = FontWeight.Medium)
+                Spacer(Modifier.height(4.dp))
+                Text(stringResource(Res.string.welcome_start_body), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(14.dp))
+                Button(onClick = onNewChat, shape = RoundedCornerShape(10.dp)) { Text(stringResource(Res.string.new_chat)) }
+            }
         }
     }
 }
@@ -269,24 +285,30 @@ private fun ConversationSidebar(
     var showCreateWorkspace by remember { mutableStateOf(false) }
     val activeWorkspace = workspaces.find { it.id == currentWorkspaceId }
 
-    Column(modifier = Modifier.fillMaxHeight().padding(top = 16.dp)) {
+    Column(modifier = Modifier.fillMaxHeight().padding(top = 12.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("AI Workspace", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Row {
-                IconButton(onClick = onNew) { Icon(FeatherIcons.Plus, contentDescription = "New conversation") }
-                IconButton(onClick = onSettings) { Icon(FeatherIcons.Settings, contentDescription = "Settings") }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(modifier = Modifier.size(28.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.primary), contentAlignment = Alignment.Center) { Text("F", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold) }
+                Spacer(Modifier.width(9.dp))
+                Text("FatAI", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
+            IconButton(onClick = onSettings) { Icon(FeatherIcons.Settings, contentDescription = stringResource(Res.string.settings)) }
+        }
+
+        Button(onClick = onNew, modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp), shape = RoundedCornerShape(10.dp)) {
+            Icon(FeatherIcons.Plus, contentDescription = null, modifier = Modifier.size(17.dp))
+            Spacer(Modifier.width(7.dp)); Text(stringResource(Res.string.new_chat))
         }
 
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp)) {
             Card(
                 modifier = Modifier.fillMaxWidth().clickable { workspaceMenuExpanded = true },
-                shape = RoundedCornerShape(10.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                shape = RoundedCornerShape(9.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
@@ -294,8 +316,8 @@ private fun ConversationSidebar(
                 ) {
                     Icon(FeatherIcons.Folder, contentDescription = null, modifier = Modifier.size(17.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text(activeWorkspace?.name ?: "Personal", modifier = Modifier.weight(1f), maxLines = 1)
-                    Icon(FeatherIcons.ChevronDown, contentDescription = "Switch workspace", modifier = Modifier.size(16.dp))
+                    Text(activeWorkspace?.name ?: stringResource(Res.string.personal), modifier = Modifier.weight(1f), maxLines = 1)
+                    Icon(FeatherIcons.ChevronDown, contentDescription = stringResource(Res.string.switch_workspace), modifier = Modifier.size(16.dp))
                 }
             }
             DropdownMenu(expanded = workspaceMenuExpanded, onDismissRequest = { workspaceMenuExpanded = false }) {
@@ -307,7 +329,7 @@ private fun ConversationSidebar(
                 }
                 HorizontalDivider()
                 DropdownMenuItem(
-                    text = { Text("Create workspace") },
+                    text = { Text(stringResource(Res.string.create_workspace)) },
                     leadingIcon = { Icon(FeatherIcons.Plus, contentDescription = null) },
                     onClick = { workspaceMenuExpanded = false; showCreateWorkspace = true }
                 )
@@ -317,7 +339,7 @@ private fun ConversationSidebar(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it; onSearch(it) },
-            placeholder = { Text("Search...") },
+            placeholder = { Text(stringResource(Res.string.search_chats)) },
             modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
             singleLine = true
         )
@@ -343,7 +365,7 @@ private fun ConversationSidebar(
                         else
                             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                     ),
-                    shape = RoundedCornerShape(10.dp)
+                    shape = RoundedCornerShape(8.dp)
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
@@ -363,22 +385,31 @@ private fun ConversationSidebar(
                         }
                         Box {
                             IconButton(onClick = { showMenu = true }) {
-                                Icon(FeatherIcons.MoreVertical, contentDescription = "Conversation actions")
+                                Icon(
+                                    FeatherIcons.MoreVertical,
+                                    contentDescription = stringResource(Res.string.conversation_actions)
+                                )
                             }
                             DropdownMenu(
                                 expanded = showMenu,
                                 onDismissRequest = { showMenu = false }
                             ) {
                                 DropdownMenuItem(
-                                    text = { Text(if (conv.isPinned) "Unpin" else "Pin") },
+                                    text = {
+                                        Text(
+                                            stringResource(
+                                                if (conv.isPinned) Res.string.unpin else Res.string.pin
+                                            )
+                                        )
+                                    },
                                     onClick = { onTogglePin(conv.id); showMenu = false }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Archive") },
+                                    text = { Text(stringResource(Res.string.archive)) },
                                     onClick = { onToggleArchive(conv.id); showMenu = false }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
+                                    text = { Text(stringResource(Res.string.delete), color = MaterialTheme.colorScheme.error) },
                                     onClick = { showMenu = false; showDeleteDialog = conv.id }
                                 )
                             }
@@ -391,15 +422,15 @@ private fun ConversationSidebar(
         if (showDeleteDialog != null) {
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = null },
-                title = { Text("Delete") },
-                text = { Text("Delete this conversation permanently?") },
+                title = { Text(stringResource(Res.string.delete)) },
+                text = { Text(stringResource(Res.string.delete_conversation_confirmation)) },
                 confirmButton = {
                     TextButton(onClick = { onDelete(showDeleteDialog!!); showDeleteDialog = null }) {
-                        Text("Delete", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(Res.string.delete), color = MaterialTheme.colorScheme.error)
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showDeleteDialog = null }) { Text("Cancel") }
+                    TextButton(onClick = { showDeleteDialog = null }) { Text(stringResource(Res.string.cancel)) }
                 }
             )
         }
@@ -425,17 +456,17 @@ private fun CreateWorkspaceDialog(
     var prompt by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("New workspace") },
+        title = { Text(stringResource(Res.string.new_workspace)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true)
-                OutlinedTextField(prompt, { prompt = it }, label = { Text("Workspace instruction") }, minLines = 3)
+                OutlinedTextField(name, { name = it }, label = { Text(stringResource(Res.string.workspace_name)) }, singleLine = true)
+                OutlinedTextField(prompt, { prompt = it }, label = { Text(stringResource(Res.string.workspace_instruction)) }, minLines = 3)
             }
         },
         confirmButton = {
-            TextButton(onClick = { onCreate(name, prompt) }, enabled = name.isNotBlank()) { Text("Create") }
+            TextButton(onClick = { onCreate(name, prompt) }, enabled = name.isNotBlank()) { Text(stringResource(Res.string.create)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } }
     )
 }
 
@@ -455,8 +486,8 @@ private fun ChatMessagesArea(
 
     LazyColumn(
         state = listState,
-        modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
         item { Spacer(Modifier.height(4.dp)) }
         items(messages, key = { it.id }) { msg -> ChatBubble(msg) }
@@ -484,20 +515,20 @@ private fun ChatBubble(msg: org.example.project.repo.ChatItem) {
         }
 
         Card(
-            modifier = Modifier.widthIn(max = 280.dp),
+            modifier = Modifier.widthIn(max = if (isQuestion) 520.dp else 720.dp),
             colors = CardDefaults.cardColors(
                 containerColor = if (isQuestion)
                     MaterialTheme.colorScheme.primaryContainer
                 else
-                    MaterialTheme.colorScheme.surfaceVariant
+                    MaterialTheme.colorScheme.surface
             ),
             shape = RoundedCornerShape(
-                topStart = 12.dp, topEnd = 12.dp,
-                bottomStart = if (isQuestion) 12.dp else 4.dp,
-                bottomEnd = if (isQuestion) 4.dp else 12.dp
+                topStart = 14.dp, topEnd = 14.dp,
+                bottomStart = if (isQuestion) 14.dp else 6.dp,
+                bottomEnd = if (isQuestion) 6.dp else 14.dp
             )
         ) {
-            Column(modifier = Modifier.padding(10.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
                 SelectionContainer {
                     Text(msg.content, style = MaterialTheme.typography.bodyMedium, lineHeight = 20.sp)
                 }
@@ -536,7 +567,7 @@ private fun ChatInputBar(
     enabled: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)) {
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp)) {
         if (attachments.isNotEmpty()) {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(bottom = 6.dp)) {
                 items(attachments, key = { it.id }) { asset ->
@@ -558,39 +589,54 @@ private fun ChatInputBar(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
-                TextButton(onClick = onStop) { Icon(FeatherIcons.Square, "Stop", modifier = Modifier.size(14.dp)); Spacer(Modifier.width(5.dp)); Text("Stop") }
-            }
-        } else {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 2.dp),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                TextButton(onClick = onRegenerate) { Icon(FeatherIcons.RefreshCw, "Regenerate", modifier = Modifier.size(17.dp)) }
-                TextButton(onClick = onContinue) { Text("Continue", fontSize = 14.sp) }
+                TextButton(onClick = onStop) {
+                    Icon(FeatherIcons.Square, stringResource(Res.string.stop), modifier = Modifier.size(14.dp))
+                    Spacer(Modifier.width(5.dp))
+                    Text(stringResource(Res.string.stop))
+                }
             }
         }
 
-        OutlinedTextField(
-            value = text,
-            onValueChange = onTextChange,
-            placeholder = { Text(if (enabled) "Message..." else "Set API key first") },
-            enabled = enabled && !isStreaming,
+        Card(
             modifier = Modifier.fillMaxWidth(),
-            trailingIcon = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onAttach, enabled = enabled && !isStreaming) {
-                        Icon(FeatherIcons.Paperclip, contentDescription = "Attach file")
+            shape = RoundedCornerShape(22.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            OutlinedTextField(
+                value = text,
+                onValueChange = onTextChange,
+                placeholder = {
+                    Text(
+                        stringResource(
+                            if (enabled) Res.string.message_fatai else Res.string.add_api_key_in_settings
+                        )
+                    )
+                },
+                enabled = enabled && !isStreaming,
+                modifier = Modifier.fillMaxWidth(),
+                trailingIcon = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = onAttach, enabled = enabled && !isStreaming) {
+                            Icon(FeatherIcons.Paperclip, stringResource(Res.string.attach_file))
+                        }
+                        IconButton(onClick = onSend, enabled = enabled && text.isNotBlank() && !isStreaming) {
+                            Icon(FeatherIcons.Send, stringResource(Res.string.send))
+                        }
                     }
-                    IconButton(
-                        onClick = onSend,
-                        enabled = enabled && text.isNotBlank() && !isStreaming
-                    ) {
-                        Icon(FeatherIcons.Send, contentDescription = "Send")
-                    }
+                },
+                shape = RoundedCornerShape(22.dp),
+                maxLines = 5
+            )
+        }
+        if (!isStreaming) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                TextButton(onClick = onRegenerate) {
+                    Icon(FeatherIcons.RefreshCw, stringResource(Res.string.regenerate), modifier = Modifier.size(15.dp))
+                    Spacer(Modifier.width(5.dp))
+                    Text(stringResource(Res.string.regenerate), fontSize = 12.sp)
                 }
-            },
-            shape = RoundedCornerShape(20.dp),
-            maxLines = 4
-        )
+                TextButton(onClick = onContinue) { Text(stringResource(Res.string.continue_generation), fontSize = 12.sp) }
+            }
+        }
     }
 }
