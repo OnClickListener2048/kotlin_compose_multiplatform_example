@@ -77,6 +77,10 @@ The application shell uses Decompose as its primary routing framework. Feature s
 - Detekt is applied to every Gradle module with shared configuration at `config/detekt/detekt.yml`.
 - Kover is applied to `composeApp` for JVM coverage reporting. The coverage report task is available once JVM tests are added; unit tests are intentionally not a delivery gate during the current architecture migration.
 
+## Brand Assets
+
+The SVG source icon is in `assets/branding/ai-assistant-icon.svg`. Android launcher densities and the iOS 1024 AppIcon are generated from that source, so product surfaces share one visual identity.
+
 ## Supported Platforms
 
 - Desktop (JVM) via Compose Multiplatform
