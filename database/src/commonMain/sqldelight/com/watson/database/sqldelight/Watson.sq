@@ -1,4 +1,5 @@
 import org.example.project.bean.ChatItemType;
+import org.example.project.bean.MessageContentType;
 import org.example.project.chat.ProviderType;
 
 CREATE TABLE ChatItem (
@@ -6,6 +7,8 @@ CREATE TABLE ChatItem (
     conversationId TEXT NOT NULL DEFAULT 'default',
     content TEXT NOT NULL,
     type TEXT AS ChatItemType NOT NULL CHECK(type IN ('Question', 'Answer')),
+    contentType TEXT AS MessageContentType NOT NULL DEFAULT 'Markdown'
+        CHECK(contentType IN ('Text', 'Markdown', 'Image', 'File', 'ToolResult', 'Thinking')),
     createdAt INTEGER NOT NULL,
     FOREIGN KEY (conversationId) REFERENCES Conversation(id) ON DELETE CASCADE
 );
@@ -89,8 +92,8 @@ selectById:
 SELECT * FROM ChatItem WHERE id = :id;
 
 insertItem:
-INSERT INTO ChatItem(id, conversationId, content, type, createdAt)
-VALUES (:id, :conversationId, :content, :type, :createdAt);
+INSERT INTO ChatItem(id, conversationId, content, type, contentType, createdAt)
+VALUES (:id, :conversationId, :content, :type, :contentType, :createdAt);
 
 updateContentById:
 UPDATE ChatItem SET content = :content WHERE id = :id;

@@ -9,6 +9,7 @@ data class ChatItem @OptIn(ExperimentalTime::class, ExperimentalUuidApi::class) 
     val id: String = Uuid.random().toString(),
     var content: String,
     val type: ChatItemType,
+    val contentType: MessageContentType = MessageContentType.Markdown,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
     var isLoading: Boolean = false
 )

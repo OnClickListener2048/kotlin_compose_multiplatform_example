@@ -2,6 +2,8 @@ package org.example.project.ai
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -255,9 +257,11 @@ private fun AddApiKeyDialog(
     val defaultKeyName = stringResource(Res.string.default_key_name, selectedProvider.displayName)
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
-    val dismissKeyboard = {
+    val dialogTapInteraction = remember { MutableInteractionSource() }
+    val dismissKeyboard: () -> Unit = {
         focusManager.clearFocus(force = true)
         keyboardController?.hide()
+        Unit
     }
 
     AlertDialog(
@@ -268,6 +272,11 @@ private fun AddApiKeyDialog(
         shape = RoundedCornerShape(18.dp),
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 0.dp,
+        modifier = Modifier.clickable(
+            interactionSource = dialogTapInteraction,
+            indication = null,
+            onClick = dismissKeyboard
+        ),
         title = {
             Column {
                 Text(stringResource(Res.string.add_api_key), fontWeight = FontWeight.SemiBold)

@@ -72,8 +72,10 @@ composeApp           # Compose Multiplatform 应用壳
 - [x] 主题持久化：跟随系统 / 浅色 / 深色
 - [x] 跟随系统语言的中英文界面文案
 - [x] 提供商下拉选择与支持键盘收起的 API 密钥弹窗
+- [x] 流式请求期间带动画的“正在思考”状态
 - [x] 摘要记忆服务（默认每 500 条消息触发）
-- [ ] Markdown 渲染、富消息类型、编辑与重试
+- [x] 助手 Markdown 渲染（GFM、表格、代码块、链接）
+- [ ] 图片、文件、工具结果、思考消息渲染器，以及编辑/重试
 - [ ] 文件内容提取、OCR、Vision 与 RAG 索引
 - [ ] Knowledge、Tool/MCP、Agent 执行（V2）
 
@@ -82,6 +84,12 @@ composeApp           # Compose Multiplatform 应用壳
 Compose 界面的可见文案不再内嵌在 Kotlin 代码中：英文位于 `composeApp/src/commonMain/composeResources/values/strings.xml`，中文位于 `values-zh/strings.xml`。Compose 会根据 Android、桌面端与 iOS 的系统语言自动选择资源包。
 
 平台专属文案仍放在各自原生资源目录。Android 应用名称位于 `composeApp/src/androidMain/res/values/strings.xml`，中文资源位于 `res/values-zh/strings.xml`；iOS 原生字符串表位于 `iosApp/iosApp/{en,zh-Hans}.lproj/`。
+
+## 多模态消息架构
+
+消息角色与消息内容类型相互独立。`ChatItemType` 标识发送方（`Question` 或 `Answer`），`MessageContentType` 标识正文载体（`Text`、`Markdown`、`Image`、`File`、`ToolResult`、`Thinking`）。主要内容类型持久化在 `ChatItem.contentType` 中（数据库迁移 4），Compose 聊天层按该类型分发到对应渲染器。
+
+当前第一步将用户输入保存为 `Text`，将流式模型输出保存为 `Markdown`，并使用 `com.mikepenz:multiplatform-markdown-renderer-m3` 0.37.0 渲染。该库具备 Android、JVM Desktop 与 iOS Target。后续图片与 PDF 将复用已有的跨平台 `FileAsset` 管线，再增加消息 Part 关联和独立渲染器；不需要修改会话、流式响应、历史记录或模型 Provider 流程。
 
 ## 代码质量
 

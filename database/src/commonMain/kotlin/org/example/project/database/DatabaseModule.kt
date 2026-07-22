@@ -7,12 +7,16 @@ import com.watson.database.sqldelight.ChatItem
 import com.watson.database.sqldelight.Conversation
 import com.watson.database.sqldelight.ApiKey
 import org.example.project.bean.ChatItemType
+import org.example.project.bean.MessageContentType
 import org.example.project.chat.ProviderType
 
 class Database(databaseDriverFactory: DatabaseDriverFactory) {
     val watsonQueries: WatsonQueries = WatsonDatabase(
         driver = databaseDriverFactory.createDriver(),
-        ChatItemAdapter = ChatItem.Adapter(typeAdapter = chatItemTypeAdapter),
+        ChatItemAdapter = ChatItem.Adapter(
+            typeAdapter = chatItemTypeAdapter,
+            contentTypeAdapter = messageContentTypeAdapter
+        ),
         ConversationAdapter = Conversation.Adapter(providerTypeAdapter = providerTypeAdapter),
         ApiKeyAdapter = ApiKey.Adapter(providerTypeAdapter = providerTypeAdapter)
     ).watsonQueries
@@ -21,6 +25,11 @@ class Database(databaseDriverFactory: DatabaseDriverFactory) {
 val chatItemTypeAdapter = object : ColumnAdapter<ChatItemType, String> {
     override fun encode(value: ChatItemType): String = value.name
     override fun decode(databaseValue: String): ChatItemType = ChatItemType.valueOf(databaseValue)
+}
+
+val messageContentTypeAdapter = object : ColumnAdapter<MessageContentType, String> {
+    override fun encode(value: MessageContentType): String = value.name
+    override fun decode(databaseValue: String): MessageContentType = MessageContentType.valueOf(databaseValue)
 }
 
 val providerTypeAdapter = object : ColumnAdapter<ProviderType, String> {

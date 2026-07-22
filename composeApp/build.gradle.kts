@@ -92,6 +92,7 @@ kotlin {
             implementation(project(":feature-settings"))
             implementation(libs.landscapist.placeholder)
             implementation(libs.composeIcons.feather)
+            implementation(libs.multiplatform.markdown.renderer.m3)
 
 
             // Multiplatform

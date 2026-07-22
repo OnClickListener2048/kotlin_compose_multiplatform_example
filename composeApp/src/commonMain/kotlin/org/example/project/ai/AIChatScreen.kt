@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -61,11 +62,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import org.example.project.bean.ChatItemType
+import org.example.project.bean.MessageContentType
 import org.example.project.repo.Conversation
 import org.example.project.feature.workspace.Workspace
 import org.example.project.feature.files.FileAsset
@@ -105,6 +109,14 @@ class AIChatScreen {
         val drawerState = rememberDrawerState(DrawerValue.Closed)
         val scope = rememberCoroutineScope()
         val snackbarHostState = remember { SnackbarHostState() }
+        val focusManager = LocalFocusManager.current
+        val keyboardController = LocalSoftwareKeyboardController.current
+        val screenTapInteraction = remember { MutableInteractionSource() }
+        val dismissKeyboard: () -> Unit = {
+            focusManager.clearFocus(force = true)
+            keyboardController?.hide()
+            Unit
+        }
         val attachFileTitle = stringResource(Res.string.attach_file)
         val filePicker = rememberFilePickerLauncher(
             type = FileKitType.File(listOf("pdf", "doc", "docx", "xls", "xlsx", "md", "txt", "png", "jpg", "jpeg", "webp")),
@@ -198,6 +210,11 @@ class AIChatScreen {
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
+                        .clickable(
+                            interactionSource = screenTapInteraction,
+                            indication = null,
+                            onClick = dismissKeyboard
+                        )
                 ) {
                     if (state.currentConversationId == null) {
                         WelcomeScreen(
@@ -530,13 +547,18 @@ private fun ChatMessagesArea(
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
         item { Spacer(Modifier.height(4.dp)) }
-        items(messages, key = { it.id }) { msg -> ChatBubble(msg) }
+        items(messages, key = { it.id }) { msg ->
+            ChatBubble(
+                msg = msg,
+                showThinking = isStreaming && msg.id == messages.lastOrNull()?.id
+            )
+        }
         item { Spacer(Modifier.height(4.dp)) }
     }
 }
 
 @Composable
-private fun ChatBubble(msg: org.example.project.repo.ChatItem) {
+private fun ChatBubble(msg: org.example.project.repo.ChatItem, showThinking: Boolean) {
     val isQuestion = msg.type == ChatItemType.Question
 
     Row(
@@ -570,11 +592,14 @@ private fun ChatBubble(msg: org.example.project.repo.ChatItem) {
         ) {
             Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
                 SelectionContainer {
-                    Text(msg.content, style = MaterialTheme.typography.bodyMedium, lineHeight = 20.sp)
+                    when (msg.contentType) {
+                        MessageContentType.Markdown -> MarkdownMessage(msg.content)
+                        else -> Text(msg.content, style = MaterialTheme.typography.bodyMedium, lineHeight = 20.sp)
+                    }
                 }
-                if (msg.isLoading) {
+                if (msg.isLoading || (!isQuestion && showThinking)) {
                     Spacer(Modifier.height(4.dp))
-                    CircularProgressIndicator(modifier = Modifier.size(12.dp), strokeWidth = 2.dp)
+                    ThinkingIndicator()
                 }
             }
         }
@@ -589,6 +614,23 @@ private fun ChatBubble(msg: org.example.project.repo.ChatItem) {
                 Text("U", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
         }
+    }
+}
+
+@Composable
+private fun ThinkingIndicator() {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(12.dp),
+            strokeWidth = 2.dp,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(Modifier.width(7.dp))
+        Text(
+            stringResource(Res.string.thinking),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

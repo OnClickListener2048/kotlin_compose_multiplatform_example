@@ -2,6 +2,7 @@ package org.example.project.repo
 
 import com.watson.database.sqldelight.WatsonQueries
 import org.example.project.bean.ChatItemType
+import org.example.project.bean.MessageContentType
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
 import kotlin.uuid.ExperimentalUuidApi
@@ -23,6 +24,7 @@ data class ChatItem(
     val conversationId: String,
     val content: String,
     val type: ChatItemType,
+    val contentType: MessageContentType,
     val createdAt: Long,
     val isLoading: Boolean = false
 )
@@ -104,13 +106,19 @@ class ChatRepository(
                 conversationId = row.conversationId,
                 content = row.content,
                 type = row.type,
+                contentType = row.contentType,
                 createdAt = row.createdAt
             )
         }
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    fun insertMessage(conversationId: String, content: String, type: ChatItemType): ChatItem {
+    fun insertMessage(
+        conversationId: String,
+        content: String,
+        type: ChatItemType,
+        contentType: MessageContentType = MessageContentType.Markdown
+    ): ChatItem {
         val id = Uuid.random().toString()
         val time = now()
         queries.insertItem(
@@ -118,10 +126,11 @@ class ChatRepository(
             conversationId = conversationId,
             content = content,
             type = type,
+            contentType = contentType,
             createdAt = time
         )
         updateConversationTimestamp(conversationId)
-        return ChatItem(id, conversationId, content, type, time)
+        return ChatItem(id, conversationId, content, type, contentType, time)
     }
 
     fun updateMessageContent(id: String, content: String) {

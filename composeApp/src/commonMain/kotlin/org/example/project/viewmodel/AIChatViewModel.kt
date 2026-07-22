@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.example.project.bean.ChatItemType
+import org.example.project.bean.MessageContentType
 import org.example.project.chat.ChatMessage
 import org.example.project.chat.ChatStreamChunk
 import org.example.project.chat.ProviderConfig
@@ -225,7 +226,12 @@ class AIChatViewModel(
             conversationId = conversation.id
         }
 
-        val userMsg = chatRepository.insertMessage(conversationId, text, ChatItemType.Question)
+        val userMsg = chatRepository.insertMessage(
+            conversationId = conversationId,
+            content = text,
+            type = ChatItemType.Question,
+            contentType = MessageContentType.Text
+        )
         val messages = _state.value.messages + userMsg
         _state.value = _state.value.copy(
             currentConversationId = conversationId,
@@ -244,6 +250,7 @@ class AIChatViewModel(
             conversationId = conversationId,
             content = "",
             type = ChatItemType.Answer,
+            contentType = MessageContentType.Markdown,
             createdAt = Clock.System.now().toEpochMilliseconds(),
             isLoading = true
         )
@@ -370,6 +377,7 @@ class AIChatViewModel(
                     conversationId = convId,
                     content = "",
                     type = ChatItemType.Answer,
+                    contentType = MessageContentType.Markdown,
                     createdAt = Clock.System.now().toEpochMilliseconds(),
                     isLoading = true
                 )

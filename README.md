@@ -72,8 +72,10 @@ The application shell uses Decompose as its primary routing framework. Feature s
 - [x] Persisted system/light/dark theme
 - [x] English and Chinese UI text that follows the system language
 - [x] Provider-key dialog with a dropdown provider selector and keyboard dismissal actions
+- [x] Streaming “Thinking…” indicator with animation
 - [x] Summary-memory service (configured at 500 messages)
-- [ ] Markdown renderer, rich message types, and edit/retry controls
+- [x] KMP Markdown rendering for assistant responses (GFM, tables, code blocks, and links)
+- [ ] Image, file, tool-result and thinking message renderers; edit/retry controls
 - [ ] File content extraction, OCR, vision and RAG indexing
 - [ ] Knowledge, tools/MCP, and agent execution (V2)
 
@@ -82,6 +84,12 @@ The application shell uses Decompose as its primary routing framework. Feature s
 Visible Compose UI text is stored in Compose Multiplatform resource bundles, not inline in Kotlin: `composeApp/src/commonMain/composeResources/values/strings.xml` for English and `values-zh/strings.xml` for Chinese. Compose selects the bundle from the platform's system language on Android, desktop, and iOS.
 
 Platform-owned strings remain in their native locations. Android's app label is defined in `composeApp/src/androidMain/res/values/strings.xml`, with its Chinese resource in `res/values-zh/strings.xml`. Native iOS string tables are kept in `iosApp/iosApp/{en,zh-Hans}.lproj/`.
+
+## Multimodal Message Architecture
+
+Message role and message content are separate concerns. `ChatItemType` identifies the sender (`Question` or `Answer`), while `MessageContentType` identifies the body (`Text`, `Markdown`, `Image`, `File`, `ToolResult`, or `Thinking`). The primary content type is persisted in `ChatItem.contentType` (database migration 4) and dispatched to a renderer in the Compose chat layer.
+
+This first implementation stores user input as `Text` and streamed model output as `Markdown`, rendered by `com.mikepenz:multiplatform-markdown-renderer-m3` 0.37.0—a Compose Multiplatform library with Android, JVM Desktop, and iOS targets. Images and PDFs will use the existing portable `FileAsset` pipeline, then gain message-part references and dedicated renderers without changing streaming, conversation history, or model-provider flows.
 
 ## Quality Gates
 
