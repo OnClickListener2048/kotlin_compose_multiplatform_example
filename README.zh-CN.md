@@ -63,7 +63,7 @@ composeApp           # Compose Multiplatform 应用壳
 
 ## 第一阶段（MVP）状态
 
-- [x] Open WebUI 风格聊天工作台：常驻侧栏、居中聊天列、模型状态与悬浮输入框
+- [x] 响应式 Open WebUI 风格聊天工作台：桌面端常驻侧栏、移动端抽屉、居中聊天列、模型状态与悬浮输入框
 - [x] 流式聊天、停止生成、重新生成、续写
 - [x] Provider / API Key 切换和模型选择
 - [x] Context Engine：系统提示词、模板、工作区、记忆、文件清单、最近历史
@@ -71,6 +71,7 @@ composeApp           # Compose Multiplatform 应用壳
 - [x] 会话文件附件：PDF、Office、Markdown、文本、图片
 - [x] 主题持久化：跟随系统 / 浅色 / 深色
 - [x] 跟随系统语言的中英文界面文案
+- [x] 提供商下拉选择与支持键盘收起的 API 密钥弹窗
 - [x] 摘要记忆服务（默认每 500 条消息触发）
 - [ ] Markdown 渲染、富消息类型、编辑与重试
 - [ ] 文件内容提取、OCR、Vision 与 RAG 索引

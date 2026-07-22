@@ -1,6 +1,7 @@
 package org.example.project.ai
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,8 +18,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,7 +38,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.chat.ProviderType
@@ -242,81 +247,110 @@ private fun AddApiKeyDialog(
     onAdd: (ProviderType, String, String, String, String) -> Unit
 ) {
     var selectedProvider by remember { mutableStateOf(ProviderType.OpenAI) }
+    var providerMenuExpanded by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf("") }
     var apiKey by remember { mutableStateOf("") }
     var baseUrl by remember { mutableStateOf(selectedProvider.defaultBaseUrl) }
     var model by remember { mutableStateOf(selectedProvider.defaultModel) }
     val defaultKeyName = stringResource(Res.string.default_key_name, selectedProvider.displayName)
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val dismissKeyboard = {
+        focusManager.clearFocus(force = true)
+        keyboardController?.hide()
+    }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.add_api_key)) },
-        text = {
+        onDismissRequest = {
+            dismissKeyboard()
+            onDismiss()
+        },
+        shape = RoundedCornerShape(18.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 0.dp,
+        title = {
             Column {
-                Text(stringResource(Res.string.provider))
-                OutlinedTextField(
-                    value = selectedProvider.displayName,
-                    onValueChange = {},
-                    readOnly = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    trailingIcon = { Text("\u25BC") }
+                Text(stringResource(Res.string.add_api_key), fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    stringResource(Res.string.add_api_key_description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                    ProviderType.entries.forEach { provider ->
-                        TextButton(
-                            onClick = {
-                                selectedProvider = provider
-                                baseUrl = provider.defaultBaseUrl
-                                model = provider.defaultModel
-                            },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                provider.displayName,
-                                fontSize = 11.sp,
-                                maxLines = 1,
-                                color = if (selectedProvider == provider)
-                                    MaterialTheme.colorScheme.primary
-                                else
-                                    MaterialTheme.colorScheme.onSurface
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                ExposedDropdownMenuBox(
+                    expanded = providerMenuExpanded,
+                    onExpandedChange = { providerMenuExpanded = !providerMenuExpanded }
+                ) {
+                    OutlinedTextField(
+                        value = selectedProvider.displayName,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text(stringResource(Res.string.provider)) },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = providerMenuExpanded)
+                        },
+                        modifier = Modifier.fillMaxWidth().menuAnchor()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = providerMenuExpanded,
+                        onDismissRequest = { providerMenuExpanded = false }
+                    ) {
+                        ProviderType.entries.forEach { provider ->
+                            DropdownMenuItem(
+                                text = { Text(provider.displayName) },
+                                onClick = {
+                                    selectedProvider = provider
+                                    baseUrl = provider.defaultBaseUrl
+                                    model = provider.defaultModel
+                                    providerMenuExpanded = false
+                                    dismissKeyboard()
+                                }
                             )
                         }
                     }
                 }
 
-                Spacer(Modifier.height(8.dp))
-                Text(stringResource(Res.string.display_name))
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text(stringResource(Res.string.my_api_key)) }
+                    label = { Text(stringResource(Res.string.display_name)) },
+                    placeholder = { Text(stringResource(Res.string.my_api_key)) },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { dismissKeyboard() })
                 )
 
-                Spacer(Modifier.height(8.dp))
-                Text(stringResource(Res.string.api_key))
                 OutlinedTextField(
                     value = apiKey,
                     onValueChange = { apiKey = it },
                     modifier = Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(Res.string.api_key)) },
                     visualTransformation = PasswordVisualTransformation(),
-                    placeholder = { Text(stringResource(Res.string.api_key_example)) }
+                    placeholder = { Text(stringResource(Res.string.api_key_example)) },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { dismissKeyboard() })
                 )
 
-                Spacer(Modifier.height(8.dp))
-                Text(stringResource(Res.string.base_url))
                 OutlinedTextField(
                     value = baseUrl,
                     onValueChange = { baseUrl = it },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(Res.string.base_url)) },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { dismissKeyboard() })
                 )
 
-                Spacer(Modifier.height(8.dp))
-                Text(stringResource(Res.string.model))
                 OutlinedTextField(
                     value = model,
                     onValueChange = { model = it },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(stringResource(Res.string.model)) },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { dismissKeyboard() })
                 )
             }
         },
@@ -324,6 +358,7 @@ private fun AddApiKeyDialog(
             TextButton(
                 onClick = {
                     if (apiKey.isNotBlank()) {
+                        dismissKeyboard()
                         onAdd(
                             selectedProvider,
                             name.ifBlank { defaultKeyName },
@@ -337,7 +372,10 @@ private fun AddApiKeyDialog(
             ) { Text(stringResource(Res.string.add)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+            TextButton(onClick = {
+                dismissKeyboard()
+                onDismiss()
+            }) { Text(stringResource(Res.string.cancel)) }
         }
     )
 }

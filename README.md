@@ -63,7 +63,7 @@ The application shell uses Decompose as its primary routing framework. Feature s
 
 ## MVP Status
 
-- [x] Open WebUI-inspired chat workspace: persistent sidebar, centered chat column, model status, and floating composer
+- [x] Open WebUI-inspired responsive workspace: persistent desktop sidebar, mobile drawer, centered chat column, model status, and floating composer
 - [x] Streaming chat, stop, regenerate and continue
 - [x] Provider/API key switching and model selection
 - [x] Context Engine: system, template, workspace, memory, file manifest and recent history
@@ -71,6 +71,7 @@ The application shell uses Decompose as its primary routing framework. Feature s
 - [x] Conversation file attachments (PDF, Office, Markdown, text, and images)
 - [x] Persisted system/light/dark theme
 - [x] English and Chinese UI text that follows the system language
+- [x] Provider-key dialog with a dropdown provider selector and keyboard dismissal actions
 - [x] Summary-memory service (configured at 500 messages)
 - [ ] Markdown renderer, rich message types, and edit/retry controls
 - [ ] File content extraction, OCR, vision and RAG indexing

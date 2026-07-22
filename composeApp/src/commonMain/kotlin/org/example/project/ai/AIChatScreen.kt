@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -46,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -124,41 +126,36 @@ class AIChatScreen {
             }
         }
 
-        ModalNavigationDrawer(
-            drawerState = drawerState,
-            drawerContent = {
-                ModalDrawerSheet(
-                    modifier = Modifier.width(288.dp),
-                    drawerContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    drawerContentColor = MaterialTheme.colorScheme.onSurface
-                ) {
-                    ConversationSidebar(
-                        conversations = state.conversations.filter { !it.isArchived },
-                        workspaces = state.workspaces,
-                        currentWorkspaceId = state.currentWorkspaceId,
-                        currentId = state.currentConversationId,
-                        onSelectWorkspace = { viewModel.selectWorkspace(it) },
-                        onCreateWorkspace = { name, prompt -> viewModel.createWorkspace(name, prompt) },
-                        onSelect = {
-                            viewModel.selectConversation(it)
-                            scope.launch { drawerState.close() }
-                        },
-                        onNew = {
-                            viewModel.newConversation()
-                            scope.launch { drawerState.close() }
-                        },
-                        onDelete = { viewModel.deleteConversation(it) },
-                        onTogglePin = { viewModel.togglePin(it) },
-                        onToggleArchive = { viewModel.toggleArchive(it) },
-                        onSearch = { viewModel.searchConversations(it) },
-                        onSettings = {
-                            scope.launch { drawerState.close() }
-                            onSettings()
-                        }
-                    )
+        @Composable
+        fun Sidebar(closeAfterAction: Boolean) {
+            ConversationSidebar(
+                conversations = state.conversations.filter { !it.isArchived },
+                workspaces = state.workspaces,
+                currentWorkspaceId = state.currentWorkspaceId,
+                currentId = state.currentConversationId,
+                onSelectWorkspace = { viewModel.selectWorkspace(it) },
+                onCreateWorkspace = { name, prompt -> viewModel.createWorkspace(name, prompt) },
+                onSelect = {
+                    viewModel.selectConversation(it)
+                    if (closeAfterAction) scope.launch { drawerState.close() }
+                },
+                onNew = {
+                    viewModel.newConversation()
+                    if (closeAfterAction) scope.launch { drawerState.close() }
+                },
+                onDelete = { viewModel.deleteConversation(it) },
+                onTogglePin = { viewModel.togglePin(it) },
+                onToggleArchive = { viewModel.toggleArchive(it) },
+                onSearch = { viewModel.searchConversations(it) },
+                onSettings = {
+                    if (closeAfterAction) scope.launch { drawerState.close() }
+                    onSettings()
                 }
-            }
-        ) {
+            )
+        }
+
+        @Composable
+        fun ChatWorkspace(showDrawerToggle: Boolean) {
             Scaffold(
                 snackbarHost = { SnackbarHost(snackbarHostState) },
                 topBar = {
@@ -169,15 +166,23 @@ class AIChatScreen {
                             Text(title ?: "FatAI", maxLines = 1)
                         },
                         navigationIcon = {
-                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(FeatherIcons.Menu, contentDescription = stringResource(Res.string.open_conversations))
+                            if (showDrawerToggle) {
+                                IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                    Icon(FeatherIcons.Menu, contentDescription = stringResource(Res.string.open_conversations))
+                                }
                             }
                         },
                         actions = {
                             Card(
                                 shape = RoundedCornerShape(8.dp),
                                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                            ) { Text(state.activeProvider.displayName, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp)) }
+                            ) {
+                                Text(
+                                    state.activeProvider.displayName,
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp)
+                                )
+                            }
                             IconButton(onClick = { viewModel.newConversation() }) {
                                 Icon(FeatherIcons.Plus, contentDescription = stringResource(Res.string.new_conversation))
                             }
@@ -220,6 +225,41 @@ class AIChatScreen {
                             enabled = state.activeConfig != null,
                             modifier = Modifier.navigationBarsPadding()
                         )
+                    }
+                }
+            }
+        }
+
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val compactLayout = maxWidth < 840.dp
+            if (compactLayout) {
+                ModalNavigationDrawer(
+                    drawerState = drawerState,
+                    drawerContent = {
+                        ModalDrawerSheet(
+                            modifier = Modifier.width(288.dp),
+                            drawerContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            drawerContentColor = MaterialTheme.colorScheme.onSurface
+                        ) {
+                            Sidebar(closeAfterAction = true)
+                        }
+                    }
+                ) {
+                    ChatWorkspace(showDrawerToggle = true)
+                }
+            } else {
+                Row(modifier = Modifier.fillMaxSize()) {
+                    Box(
+                        modifier = Modifier
+                            .width(288.dp)
+                            .fillMaxHeight()
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Sidebar(closeAfterAction = false)
+                    }
+                    VerticalDivider()
+                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                        ChatWorkspace(showDrawerToggle = false)
                     }
                 }
             }
