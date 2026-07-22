@@ -55,6 +55,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -83,6 +84,8 @@ import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.size
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import com.mikepenz.markdown.model.State
+import com.mikepenz.markdown.model.parseMarkdownFlow
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ChevronDown
 import compose.icons.feathericons.Folder
@@ -534,6 +537,7 @@ private fun ChatMessagesArea(
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
+    val markdownCache = remember { mutableStateMapOf<String, CachedMarkdown>() }
 
     LaunchedEffect(messages.size, messages.lastOrNull()?.content) {
         if (messages.isNotEmpty()) {
@@ -541,25 +545,59 @@ private fun ChatMessagesArea(
         }
     }
 
-    LazyColumn(
-        state = listState,
-        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp)
-    ) {
-        item { Spacer(Modifier.height(4.dp)) }
-        items(messages, key = { it.id }) { msg ->
-            ChatBubble(
-                msg = msg,
-                showThinking = isStreaming && msg.id == messages.lastOrNull()?.id
-            )
+    LaunchedEffect(messages, isStreaming) {
+        messages
+            .filter {
+                it.contentType == MessageContentType.Markdown &&
+                    it.content.requiresMarkdownRenderer() &&
+                    !it.isLoading &&
+                    !(isStreaming && it.id == messages.lastOrNull()?.id)
+            }
+            .forEach { message ->
+                if (markdownCache[message.id]?.content != message.content) {
+                    parseMarkdownFlow(message.content).collect { state ->
+                        if (state is State.Success) {
+                            markdownCache[message.id] = CachedMarkdown(message.content, state)
+                        }
+                    }
+                }
+            }
+    }
+
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val compactLayout = maxWidth < 600.dp
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize().padding(horizontal = if (compactLayout) 12.dp else 20.dp),
+            verticalArrangement = Arrangement.spacedBy(if (compactLayout) 12.dp else 18.dp)
+        ) {
+            item { Spacer(Modifier.height(4.dp)) }
+            items(messages, key = { it.id }) { msg ->
+                ChatBubble(
+                    msg = msg,
+                    showThinking = isStreaming && msg.id == messages.lastOrNull()?.id,
+                    compactLayout = compactLayout,
+                    markdownState = markdownCache[msg.id]?.takeIf { it.content == msg.content }?.state
+                )
+            }
+            item { Spacer(Modifier.height(4.dp)) }
         }
-        item { Spacer(Modifier.height(4.dp)) }
     }
 }
 
 @Composable
-private fun ChatBubble(msg: org.example.project.repo.ChatItem, showThinking: Boolean) {
+private fun ChatBubble(
+    msg: org.example.project.repo.ChatItem,
+    showThinking: Boolean,
+    compactLayout: Boolean,
+    markdownState: State.Success?
+) {
     val isQuestion = msg.type == ChatItemType.Question
+    val avatarSize = if (compactLayout) 24.dp else 28.dp
+    val bubblePaddingHorizontal = if (compactLayout) 12.dp else 14.dp
+    val bubblePaddingVertical = if (compactLayout) 10.dp else 12.dp
+    val textSize = if (compactLayout) 14.sp else 15.sp
+    val lineHeight = if (compactLayout) 20.sp else 22.sp
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -567,13 +605,13 @@ private fun ChatBubble(msg: org.example.project.repo.ChatItem, showThinking: Boo
     ) {
         if (!isQuestion) {
             Box(
-                modifier = Modifier.size(28.dp).clip(CircleShape)
+                modifier = Modifier.size(avatarSize).clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary),
                 contentAlignment = Alignment.Center
             ) {
                 Text("A", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(if (compactLayout) 6.dp else 8.dp))
         }
 
         Card(
@@ -590,11 +628,23 @@ private fun ChatBubble(msg: org.example.project.repo.ChatItem, showThinking: Boo
                 bottomEnd = if (isQuestion) 6.dp else 14.dp
             )
         ) {
-            Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
+            Column(modifier = Modifier.padding(horizontal = bubblePaddingHorizontal, vertical = bubblePaddingVertical)) {
                 SelectionContainer {
                     when (msg.contentType) {
-                        MessageContentType.Markdown -> MarkdownMessage(msg.content)
-                        else -> Text(msg.content, style = MaterialTheme.typography.bodyMedium, lineHeight = 20.sp)
+                        MessageContentType.Markdown -> {
+                            if (markdownState != null) {
+                                MarkdownMessage(markdownState, compactLayout = compactLayout)
+                            } else {
+                                Text(
+                                    msg.content,
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = textSize, lineHeight = lineHeight)
+                                )
+                            }
+                        }
+                        else -> Text(
+                            msg.content,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = textSize, lineHeight = lineHeight)
+                        )
                     }
                 }
                 if (msg.isLoading || (!isQuestion && showThinking)) {
@@ -605,9 +655,9 @@ private fun ChatBubble(msg: org.example.project.repo.ChatItem, showThinking: Boo
         }
 
         if (isQuestion) {
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(if (compactLayout) 6.dp else 8.dp))
             Box(
-                modifier = Modifier.size(28.dp).clip(CircleShape)
+                modifier = Modifier.size(avatarSize).clip(CircleShape)
                     .background(MaterialTheme.colorScheme.tertiary),
                 contentAlignment = Alignment.Center
             ) {
@@ -616,6 +666,24 @@ private fun ChatBubble(msg: org.example.project.repo.ChatItem, showThinking: Boo
         }
     }
 }
+
+private data class CachedMarkdown(val content: String, val state: State.Success)
+
+private fun String.requiresMarkdownRenderer(): Boolean =
+    contains("```") ||
+        contains("**") ||
+        contains('`') ||
+        contains("[") && contains("](") ||
+        lineSequence().any {
+            it.startsWith("# ") ||
+                it.startsWith("## ") ||
+                it.startsWith("### ") ||
+                it.startsWith("- ") ||
+                it.startsWith("* ") ||
+                it.startsWith("> ") ||
+                it.matches(Regex("\\d+\\.\\s+.*")) ||
+                it.startsWith("|")
+        }
 
 @Composable
 private fun ThinkingIndicator() {
@@ -649,7 +717,7 @@ private fun ChatInputBar(
     enabled: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp)) {
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
         if (attachments.isNotEmpty()) {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(bottom = 6.dp)) {
                 items(attachments, key = { it.id }) { asset ->
@@ -695,6 +763,7 @@ private fun ChatInputBar(
                     )
                 },
                 enabled = enabled && !isStreaming,
+                textStyle = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp),
                 modifier = Modifier.fillMaxWidth(),
                 trailingIcon = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -707,7 +776,7 @@ private fun ChatInputBar(
                     }
                 },
                 shape = RoundedCornerShape(22.dp),
-                maxLines = 5
+                maxLines = 4
             )
         }
         if (!isStreaming) {
