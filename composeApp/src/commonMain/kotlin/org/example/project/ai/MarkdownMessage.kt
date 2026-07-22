@@ -10,7 +10,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.sp
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownTypography
-import com.mikepenz.markdown.model.State
 
 /**
  * KMP-safe Markdown renderer for assistant messages.
@@ -20,7 +19,7 @@ import com.mikepenz.markdown.model.State
  */
 @Composable
 internal fun MarkdownMessage(
-    state: State.Success,
+    markdown: String,
     compactLayout: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -29,7 +28,7 @@ internal fun MarkdownMessage(
         lineHeight = if (compactLayout) 20.sp else 22.sp
     )
     Markdown(
-        state = state,
+        content = markdown,
         modifier = modifier,
         typography = markdownTypography(
             h1 = MaterialTheme.typography.headlineSmall.copy(

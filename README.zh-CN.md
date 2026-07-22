@@ -75,7 +75,7 @@ composeApp           # Compose Multiplatform 应用壳
 - [x] 流式请求期间带动画的“正在思考”状态
 - [x] 摘要记忆服务（默认每 500 条消息触发）
 - [x] 助手 Markdown 渲染（GFM、表格、代码块、链接）
-- [x] 移动优先的聊天字号与缓存 Markdown 解析，提升列表滚动流畅度
+- [x] 移动优先的聊天与 Markdown 字号
 - [ ] 图片、文件、工具结果、思考消息渲染器，以及编辑/重试
 - [ ] 文件内容提取、OCR、Vision 与 RAG 索引
 - [ ] Knowledge、Tool/MCP、Agent 执行（V2）

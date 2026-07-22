@@ -55,7 +55,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -84,8 +83,6 @@ import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.size
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
-import com.mikepenz.markdown.model.State
-import com.mikepenz.markdown.model.parseMarkdownFlow
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ChevronDown
 import compose.icons.feathericons.Folder
@@ -537,31 +534,11 @@ private fun ChatMessagesArea(
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
-    val markdownCache = remember { mutableStateMapOf<String, CachedMarkdown>() }
 
     LaunchedEffect(messages.size, messages.lastOrNull()?.content) {
         if (messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.lastIndex)
         }
-    }
-
-    LaunchedEffect(messages, isStreaming) {
-        messages
-            .filter {
-                it.contentType == MessageContentType.Markdown &&
-                    it.content.requiresMarkdownRenderer() &&
-                    !it.isLoading &&
-                    !(isStreaming && it.id == messages.lastOrNull()?.id)
-            }
-            .forEach { message ->
-                if (markdownCache[message.id]?.content != message.content) {
-                    parseMarkdownFlow(message.content).collect { state ->
-                        if (state is State.Success) {
-                            markdownCache[message.id] = CachedMarkdown(message.content, state)
-                        }
-                    }
-                }
-            }
     }
 
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
@@ -576,8 +553,7 @@ private fun ChatMessagesArea(
                 ChatBubble(
                     msg = msg,
                     showThinking = isStreaming && msg.id == messages.lastOrNull()?.id,
-                    compactLayout = compactLayout,
-                    markdownState = markdownCache[msg.id]?.takeIf { it.content == msg.content }?.state
+                    compactLayout = compactLayout
                 )
             }
             item { Spacer(Modifier.height(4.dp)) }
@@ -589,8 +565,7 @@ private fun ChatMessagesArea(
 private fun ChatBubble(
     msg: org.example.project.repo.ChatItem,
     showThinking: Boolean,
-    compactLayout: Boolean,
-    markdownState: State.Success?
+    compactLayout: Boolean
 ) {
     val isQuestion = msg.type == ChatItemType.Question
     val avatarSize = if (compactLayout) 24.dp else 28.dp
@@ -631,16 +606,7 @@ private fun ChatBubble(
             Column(modifier = Modifier.padding(horizontal = bubblePaddingHorizontal, vertical = bubblePaddingVertical)) {
                 SelectionContainer {
                     when (msg.contentType) {
-                        MessageContentType.Markdown -> {
-                            if (markdownState != null) {
-                                MarkdownMessage(markdownState, compactLayout = compactLayout)
-                            } else {
-                                Text(
-                                    msg.content,
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = textSize, lineHeight = lineHeight)
-                                )
-                            }
-                        }
+                        MessageContentType.Markdown -> MarkdownMessage(msg.content, compactLayout = compactLayout)
                         else -> Text(
                             msg.content,
                             style = MaterialTheme.typography.bodyMedium.copy(fontSize = textSize, lineHeight = lineHeight)
@@ -666,24 +632,6 @@ private fun ChatBubble(
         }
     }
 }
-
-private data class CachedMarkdown(val content: String, val state: State.Success)
-
-private fun String.requiresMarkdownRenderer(): Boolean =
-    contains("```") ||
-        contains("**") ||
-        contains('`') ||
-        contains("[") && contains("](") ||
-        lineSequence().any {
-            it.startsWith("# ") ||
-                it.startsWith("## ") ||
-                it.startsWith("### ") ||
-                it.startsWith("- ") ||
-                it.startsWith("* ") ||
-                it.startsWith("> ") ||
-                it.matches(Regex("\\d+\\.\\s+.*")) ||
-                it.startsWith("|")
-        }
 
 @Composable
 private fun ThinkingIndicator() {

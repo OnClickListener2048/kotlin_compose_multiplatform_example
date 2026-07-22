@@ -75,7 +75,7 @@ The application shell uses Decompose as its primary routing framework. Feature s
 - [x] Streaming “Thinking…” indicator with animation
 - [x] Summary-memory service (configured at 500 messages)
 - [x] KMP Markdown rendering for assistant responses (GFM, tables, code blocks, and links)
-- [x] Mobile-first chat typography and cached Markdown parsing for smooth list scrolling
+- [x] Mobile-first chat and Markdown typography
 - [ ] Image, file, tool-result and thinking message renderers; edit/retry controls
 - [ ] File content extraction, OCR, vision and RAG indexing
 - [ ] Knowledge, tools/MCP, and agent execution (V2)
