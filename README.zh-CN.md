@@ -141,7 +141,7 @@ Android 应用名称保留在 `composeApp/src/androidMain/res/values*`。iOS 原
 
 ## 数据持久化
 
-SQLDelight 保存用户、会话、消息、Provider 配置、工作区、记忆、Prompt Template、文件附件和 App 设置。所有业务数据都带有 `userId`，仓库的读写操作均按当前用户过滤。当前启动时会自动创建 `local-default` 默认本地用户，并将迁移前的已有数据归属给该用户；未来接入登录时只需替换 `CurrentUserProvider` 的实现。桌面端数据库位于 `~/.fatai/app.db`；首次启动时如果存在旧的 `~/.ai-assistant/app.db`，会将其复制过来。Android 与 iOS 使用各自的 SQLDelight Driver。
+SQLDelight 保存用户、会话、消息、Provider 配置、工作区、记忆、Prompt Template、文件附件和 App 设置。所有业务数据都带有 `userId`，仓库的读写操作均按当前用户过滤。当前启动时会自动创建 `local-default` 默认本地用户，并将迁移前的已有数据归属给该用户；未来接入登录时只需替换 `CurrentUserProvider` 的实现。桌面端数据库位于 `~/.fatai/app.db`；首次启动时如果存在旧的 `~/.ai-assistant/app.db`，会将其复制过来。桌面端会持久化 SQLDelight schema 版本，并识别旧版未记录版本号的本地库后安全迁移。Android 与 iOS 使用各自的 SQLDelight Driver。
 
 ## 构建与运行
 
