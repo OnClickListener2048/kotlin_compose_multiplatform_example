@@ -1,14 +1,20 @@
 package org.example.project.feature.workspace
 
 import com.watson.database.sqldelight.WatsonQueries
+import org.example.project.feature.user.CurrentUserProvider
+import org.example.project.feature.user.DEFAULT_USER_ID
 import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 const val INBOX_WORKSPACE_ID = "inbox"
 
+fun inboxWorkspaceIdFor(userId: String): String =
+    if (userId == DEFAULT_USER_ID) INBOX_WORKSPACE_ID else "$userId:$INBOX_WORKSPACE_ID"
+
 data class Workspace(
     val id: String,
+    val userId: String,
     val name: String,
     val systemPrompt: String,
     val createdAt: Long,
@@ -16,13 +22,16 @@ data class Workspace(
     val isArchived: Boolean
 )
 
-class WorkspaceRepository(private val queries: WatsonQueries) {
+class WorkspaceRepository(private val queries: WatsonQueries, private val currentUser: CurrentUserProvider) {
+    val inboxWorkspaceId: String get() = inboxWorkspaceIdFor(currentUser.currentUserId)
+
     @OptIn(kotlin.time.ExperimentalTime::class)
     private fun now() = Clock.System.now().toEpochMilliseconds()
 
     fun ensureInbox(): Workspace {
-        return getById(INBOX_WORKSPACE_ID) ?: Workspace(
-            id = INBOX_WORKSPACE_ID,
+        return getById(inboxWorkspaceId) ?: Workspace(
+            id = inboxWorkspaceId,
+            userId = currentUser.currentUserId,
             name = "Personal",
             systemPrompt = "",
             createdAt = now(),
@@ -31,6 +40,7 @@ class WorkspaceRepository(private val queries: WatsonQueries) {
         ).also { workspace ->
             queries.insertWorkspace(
                 id = workspace.id,
+                userId = workspace.userId,
                 name = workspace.name,
                 systemPrompt = workspace.systemPrompt,
                 createdAt = workspace.createdAt,
@@ -40,16 +50,17 @@ class WorkspaceRepository(private val queries: WatsonQueries) {
         }
     }
 
-    fun getAll(): List<Workspace> = queries.selectWorkspaces().executeAsList().map { it.toWorkspace() }
+    fun getAll(): List<Workspace> = queries.selectWorkspaces(currentUser.currentUserId).executeAsList().map { it.toWorkspace() }
 
-    fun getById(id: String): Workspace? = queries.selectWorkspaceById(id).executeAsOneOrNull()?.toWorkspace()
+    fun getById(id: String): Workspace? = queries.selectWorkspaceById(id, currentUser.currentUserId).executeAsOneOrNull()?.toWorkspace()
 
     @OptIn(ExperimentalUuidApi::class)
     fun create(name: String, systemPrompt: String = ""): Workspace {
         val time = now()
-        val workspace = Workspace(Uuid.random().toString(), name.trim(), systemPrompt.trim(), time, time, false)
+        val workspace = Workspace(Uuid.random().toString(), currentUser.currentUserId, name.trim(), systemPrompt.trim(), time, time, false)
         queries.insertWorkspace(
             id = workspace.id,
+            userId = workspace.userId,
             name = workspace.name,
             systemPrompt = workspace.systemPrompt,
             createdAt = time,
@@ -60,16 +71,17 @@ class WorkspaceRepository(private val queries: WatsonQueries) {
     }
 
     fun update(id: String, name: String, systemPrompt: String) {
-        queries.updateWorkspace(name.trim(), systemPrompt.trim(), now(), id)
+        queries.updateWorkspace(name.trim(), systemPrompt.trim(), now(), id, currentUser.currentUserId)
     }
 
     fun archive(id: String, archived: Boolean) {
-        if (id != INBOX_WORKSPACE_ID) queries.archiveWorkspace(if (archived) 1L else 0L, now(), id)
+        if (id != inboxWorkspaceId) queries.archiveWorkspace(if (archived) 1L else 0L, now(), id, currentUser.currentUserId)
     }
 }
 
 private fun com.watson.database.sqldelight.Workspace.toWorkspace() = Workspace(
     id = id,
+    userId = userId,
     name = name,
     systemPrompt = systemPrompt,
     createdAt = createdAt,

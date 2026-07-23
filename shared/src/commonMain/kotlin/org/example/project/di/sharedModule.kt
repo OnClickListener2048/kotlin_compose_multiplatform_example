@@ -22,6 +22,8 @@ import org.example.project.feature.model.ModelGateway
 import org.example.project.feature.prompt.PromptTemplateRepository
 import org.example.project.feature.workspace.WorkspaceRepository
 import org.example.project.feature.settings.SettingsRepository
+import org.example.project.feature.user.CurrentUserProvider
+import org.example.project.feature.user.UserRepository
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
 import org.koin.core.module.Module
@@ -46,21 +48,24 @@ val sharedModule = module {
         get<Database>().watsonQueries
     }
 
+    single { UserRepository(get()) }
+    single<CurrentUserProvider> { get<UserRepository>() }
+
     single {
         println("ChatRepository")
-        ChatRepository(get())
+        ChatRepository(get(), get())
     }
 
     single {
         println("ApiKeyRepository")
-        ApiKeyRepository(get())
+        ApiKeyRepository(get(), get())
     }
 
-    single { WorkspaceRepository(get()) }
-    single { MemoryRepository(get()) }
-    single { PromptTemplateRepository(get()) }
-    single { FileAssetRepository(get()) }
-    single { SettingsRepository(get()) }
+    single { WorkspaceRepository(get(), get()) }
+    single { MemoryRepository(get(), get()) }
+    single { PromptTemplateRepository(get(), get()) }
+    single { FileAssetRepository(get(), get()) }
+    single { SettingsRepository(get(), get()) }
 
     single<ChatProvider> {
         println("OpenAICompatibleProvider")

@@ -1,12 +1,14 @@
 package org.example.project.feature.files
 
 import com.watson.database.sqldelight.WatsonQueries
+import org.example.project.feature.user.CurrentUserProvider
 import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 data class FileAsset(
     val id: String,
+    val userId: String,
     val workspaceId: String?,
     val conversationId: String?,
     val messageId: String?,
@@ -17,15 +19,15 @@ data class FileAsset(
     val createdAt: Long
 )
 
-class FileAssetRepository(private val queries: WatsonQueries) {
+class FileAssetRepository(private val queries: WatsonQueries, private val currentUser: CurrentUserProvider) {
     @OptIn(kotlin.time.ExperimentalTime::class)
     private fun now() = Clock.System.now().toEpochMilliseconds()
 
     fun forConversation(conversationId: String): List<FileAsset> =
-        queries.selectFilesForConversation(conversationId).executeAsList().map { it.toFileAsset() }
+        queries.selectFilesForConversation(conversationId, currentUser.currentUserId).executeAsList().map { it.toFileAsset() }
 
     fun pendingForConversation(conversationId: String): List<FileAsset> =
-        queries.selectPendingFilesForConversation(conversationId).executeAsList().map { it.toFileAsset() }
+        queries.selectPendingFilesForConversation(conversationId, currentUser.currentUserId).executeAsList().map { it.toFileAsset() }
 
     @OptIn(ExperimentalUuidApi::class)
     fun attach(
@@ -38,25 +40,26 @@ class FileAssetRepository(private val queries: WatsonQueries) {
         messageId: String? = null
     ): FileAsset {
         val asset = FileAsset(
-            Uuid.random().toString(), workspaceId, conversationId, messageId,
+            Uuid.random().toString(), currentUser.currentUserId, workspaceId, conversationId, messageId,
             displayName, mimeType, localPath, sizeBytes, now()
         )
         queries.insertFileAsset(
-            asset.id, asset.workspaceId, asset.conversationId, asset.messageId,
+            asset.id, asset.userId, asset.workspaceId, asset.conversationId, asset.messageId,
             asset.displayName, asset.mimeType, asset.localPath, asset.sizeBytes, asset.createdAt
         )
         return asset
     }
 
     fun assignPendingToMessage(conversationId: String, messageId: String) {
-        queries.assignPendingFilesToMessage(messageId = messageId, conversationId = conversationId)
+        queries.assignPendingFilesToMessage(messageId = messageId, conversationId = conversationId, userId = currentUser.currentUserId)
     }
 
-    fun delete(id: String) = queries.deleteFileAsset(id)
+    fun delete(id: String) = queries.deleteFileAsset(id, currentUser.currentUserId)
 }
 
 private fun com.watson.database.sqldelight.FileAsset.toFileAsset() = FileAsset(
     id = id,
+    userId = userId,
     workspaceId = workspaceId,
     conversationId = conversationId,
     messageId = messageId,

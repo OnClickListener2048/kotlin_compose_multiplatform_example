@@ -2,12 +2,14 @@ package org.example.project.repo
 
 import com.watson.database.sqldelight.WatsonQueries
 import org.example.project.chat.ProviderType
+import org.example.project.feature.user.CurrentUserProvider
 import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 data class ApiKeyInfo(
     val id: String,
+    val userId: String,
     val providerType: ProviderType,
     val name: String,
     val apiKey: String,
@@ -18,21 +20,22 @@ data class ApiKeyInfo(
 )
 
 class ApiKeyRepository(
-    private val queries: WatsonQueries
+    private val queries: WatsonQueries,
+    private val currentUser: CurrentUserProvider
 ) {
     @OptIn(kotlin.time.ExperimentalTime::class)
     private fun now() = Clock.System.now().toEpochMilliseconds()
 
     fun getAllKeys(): List<ApiKeyInfo> {
-        return queries.selectAllApiKeys().executeAsList().map { it.toApiKeyInfo() }
+        return queries.selectAllApiKeys(currentUser.currentUserId).executeAsList().map { it.toApiKeyInfo() }
     }
 
     fun getKeysByProvider(providerType: ProviderType): List<ApiKeyInfo> {
-        return queries.selectApiKeysByProvider(providerType).executeAsList().map { it.toApiKeyInfo() }
+        return queries.selectApiKeysByProvider(currentUser.currentUserId, providerType).executeAsList().map { it.toApiKeyInfo() }
     }
 
     fun getActiveKey(): ApiKeyInfo? {
-        return queries.selectActiveApiKey().executeAsOneOrNull()?.toApiKeyInfo()
+        return queries.selectActiveApiKey(currentUser.currentUserId).executeAsOneOrNull()?.toApiKeyInfo()
     }
 
     @OptIn(ExperimentalUuidApi::class)
@@ -48,11 +51,12 @@ class ApiKeyRepository(
         val time = now()
 
         if (setActive) {
-            queries.deactivateAllApiKeys()
+            queries.deactivateAllApiKeys(currentUser.currentUserId)
         }
 
         queries.insertApiKey(
             id = id,
+            userId = currentUser.currentUserId,
             providerType = providerType,
             name = name,
             apiKey = apiKey,
@@ -62,24 +66,25 @@ class ApiKeyRepository(
             createdAt = time
         )
 
-        return ApiKeyInfo(id, providerType, name, apiKey, baseUrl, model, setActive, time)
+        return ApiKeyInfo(id, currentUser.currentUserId, providerType, name, apiKey, baseUrl, model, setActive, time)
     }
 
     fun setActiveKey(id: String) {
-        queries.deactivateAllApiKeys()
-        queries.updateApiKeyActive(id = id, isActive = 1L)
+        queries.deactivateAllApiKeys(currentUser.currentUserId)
+        queries.updateApiKeyActive(id = id, isActive = 1L, userId = currentUser.currentUserId)
     }
 
     fun deleteKey(id: String) {
-        queries.deleteApiKey(id)
+        queries.deleteApiKey(id, currentUser.currentUserId)
     }
 
     fun importKeys(keys: List<ApiKeyInfo>) {
         for (key in keys) {
-            val existing = queries.selectApiKeyById(key.id).executeAsOneOrNull()
+            val existing = queries.selectApiKeyById(key.id, currentUser.currentUserId).executeAsOneOrNull()
             if (existing == null) {
                 queries.insertApiKey(
                     id = key.id,
+                    userId = currentUser.currentUserId,
                     providerType = key.providerType,
                     name = key.name,
                     apiKey = key.apiKey,
@@ -95,6 +100,7 @@ class ApiKeyRepository(
 
 private fun com.watson.database.sqldelight.ApiKey.toApiKeyInfo() = ApiKeyInfo(
     id = id,
+    userId = userId,
     providerType = providerType,
     name = name,
     apiKey = apiKey,

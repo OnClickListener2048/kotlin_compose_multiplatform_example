@@ -37,6 +37,7 @@ kotlin {
             implementation(project(":feature-prompt"))
             implementation(project(":feature-chat"))
             implementation(project(":feature-settings"))
+            implementation(project(":feature-user"))
 
             // Koin 核心库
             implementation(libs.koin.core)

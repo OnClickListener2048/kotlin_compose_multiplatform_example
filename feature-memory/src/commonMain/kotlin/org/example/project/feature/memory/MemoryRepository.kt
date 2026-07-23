@@ -1,6 +1,7 @@
 package org.example.project.feature.memory
 
 import com.watson.database.sqldelight.WatsonQueries
+import org.example.project.feature.user.CurrentUserProvider
 import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -10,6 +11,7 @@ enum class MemoryKind { FACT, SUMMARY }
 
 data class MemoryEntry(
     val id: String,
+    val userId: String,
     val scope: MemoryScope,
     val workspaceId: String?,
     val conversationId: String?,
@@ -19,12 +21,12 @@ data class MemoryEntry(
     val updatedAt: Long
 )
 
-class MemoryRepository(private val queries: WatsonQueries) {
+class MemoryRepository(private val queries: WatsonQueries, private val currentUser: CurrentUserProvider) {
     @OptIn(kotlin.time.ExperimentalTime::class)
     private fun now() = Clock.System.now().toEpochMilliseconds()
 
     fun recall(workspaceId: String?, conversationId: String?, limit: Long = 20): List<MemoryEntry> =
-        queries.selectMemoriesForContext(workspaceId, conversationId, limit).executeAsList().map { it.toMemoryEntry() }
+        queries.selectMemoriesForContext(currentUser.currentUserId, workspaceId, conversationId, limit).executeAsList().map { it.toMemoryEntry() }
 
     @OptIn(ExperimentalUuidApi::class)
     fun save(
@@ -36,9 +38,10 @@ class MemoryRepository(private val queries: WatsonQueries) {
     ): MemoryEntry {
         require(content.isNotBlank()) { "Memory content cannot be blank" }
         val time = now()
-        val entry = MemoryEntry(Uuid.random().toString(), scope, workspaceId, conversationId, kind, content.trim(), time, time)
+        val entry = MemoryEntry(Uuid.random().toString(), currentUser.currentUserId, scope, workspaceId, conversationId, kind, content.trim(), time, time)
         queries.insertMemory(
             id = entry.id,
+            userId = entry.userId,
             scope = entry.scope.name,
             workspaceId = entry.workspaceId,
             conversationId = entry.conversationId,
@@ -51,11 +54,12 @@ class MemoryRepository(private val queries: WatsonQueries) {
         return entry
     }
 
-    fun archive(id: String) = queries.archiveMemory(1L, now(), id)
+    fun archive(id: String) = queries.archiveMemory(1L, now(), id, currentUser.currentUserId)
 }
 
 private fun com.watson.database.sqldelight.MemoryEntry.toMemoryEntry() = MemoryEntry(
     id = id,
+    userId = userId,
     scope = MemoryScope.valueOf(scope),
     workspaceId = workspaceId,
     conversationId = conversationId,

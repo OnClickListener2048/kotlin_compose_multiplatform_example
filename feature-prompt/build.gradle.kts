@@ -13,6 +13,7 @@ kotlin {
             implementation(project(":feature-memory"))
             implementation(project(":feature-files"))
             implementation(project(":feature-model"))
+            implementation(project(":feature-user"))
         }
     }
 }

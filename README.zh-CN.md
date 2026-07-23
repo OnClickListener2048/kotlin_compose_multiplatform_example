@@ -33,7 +33,8 @@ FatAI 是一个仍在持续建设中的 AI Assistant。项目采用 KMP Feature 
 | 模块 | 当前实现 | 状态 |
 | --- | --- | --- |
 | `core` | `ChatItemType`、`MessageContentType`、Provider 类型和聊天基础模型。 | 已实现 |
-| `database` | SQLDelight Schema、Android/JVM/iOS Driver，以及截至版本 5 的迁移。 | 已实现 |
+| `database` | SQLDelight Schema、Android/JVM/iOS Driver，以及截至版本 6 的迁移。 | 已实现 |
+| `feature-user` | 当前用户抽象、默认本地用户初始化与数据归属边界。 | 已实现；登录与账号切换待接入 |
 | `feature-chat` | 会话与消息仓库：创建、列表、搜索、置顶、归档、删除、消息持久化与更新。 | 已实现 |
 | `feature-prompt` | 有序 `ContextEngine`、系统/模板/工作区/记忆/文件/历史 Provider，以及 Prompt Template 持久化。 | 已实现；暂无模板管理页面 |
 | `feature-memory` | Global/Workspace/Conversation 范围的记忆保存与召回；500 条消息时的模型摘要服务。 | 已实现；暂无语义检索与记忆管理页面 |
@@ -113,7 +114,7 @@ Knowledge、Tools、Agent 模块已经被纳入项目结构，但当前没有领
 composeApp（Compose UI、Decompose 根路由、响应式页面）
         │
         ├── shared（临时 Koin 装配与平台启动桥接）
-        │      ├── feature-chat / feature-model / feature-prompt
+        │      ├── feature-user / feature-chat / feature-model / feature-prompt
         │      ├── feature-memory / feature-files / feature-workspace
         │      └── feature-settings
         │
@@ -137,7 +138,7 @@ Android 应用名称保留在 `composeApp/src/androidMain/res/values*`。iOS 原
 
 ## 数据持久化
 
-SQLDelight 保存会话、消息、Provider 配置、工作区、记忆、Prompt Template、文件附件和 App 设置。桌面端数据库位于 `~/.fatai/app.db`；首次启动时如果存在旧的 `~/.ai-assistant/app.db`，会将其复制过来。Android 与 iOS 使用各自的 SQLDelight Driver。
+SQLDelight 保存用户、会话、消息、Provider 配置、工作区、记忆、Prompt Template、文件附件和 App 设置。所有业务数据都带有 `userId`，仓库的读写操作均按当前用户过滤。当前启动时会自动创建 `local-default` 默认本地用户，并将迁移前的已有数据归属给该用户；未来接入登录时只需替换 `CurrentUserProvider` 的实现。桌面端数据库位于 `~/.fatai/app.db`；首次启动时如果存在旧的 `~/.ai-assistant/app.db`，会将其复制过来。Android 与 iOS 使用各自的 SQLDelight Driver。
 
 ## 构建与运行
 

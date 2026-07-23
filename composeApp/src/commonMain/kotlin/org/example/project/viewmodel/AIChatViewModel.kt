@@ -26,6 +26,7 @@ import org.example.project.feature.memory.ConversationMemoryService
 import org.example.project.feature.workspace.INBOX_WORKSPACE_ID
 import org.example.project.feature.workspace.Workspace
 import org.example.project.feature.workspace.WorkspaceRepository
+import org.example.project.feature.user.CurrentUserProvider
 import org.example.project.repo.ChatItem
 import org.example.project.repo.ChatRepository
 import org.example.project.repo.Conversation
@@ -57,7 +58,8 @@ class AIChatViewModel(
     private val contextEngine: ContextEngine,
     private val workspaceRepository: WorkspaceRepository,
     private val fileAssetRepository: FileAssetRepository,
-    private val conversationMemoryService: ConversationMemoryService
+    private val conversationMemoryService: ConversationMemoryService,
+    private val currentUser: CurrentUserProvider
 ) {
 
     private val screenModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -72,7 +74,8 @@ class AIChatViewModel(
     private var shouldStopStream = false
 
     init {
-        workspaceRepository.ensureInbox()
+        val inbox = workspaceRepository.ensureInbox()
+        _state.value = _state.value.copy(currentWorkspaceId = inbox.id)
         loadWorkspaces()
         loadConversations()
         loadActiveConfig()
@@ -258,6 +261,7 @@ class AIChatViewModel(
         @OptIn(ExperimentalUuidApi::class, kotlin.time.ExperimentalTime::class)
         var assistantMsg = ChatItem(
             id = Uuid.random().toString(),
+            userId = currentUser.currentUserId,
             conversationId = conversationId,
             content = "",
             type = ChatItemType.Answer,
@@ -385,6 +389,7 @@ class AIChatViewModel(
                 @OptIn(ExperimentalUuidApi::class, kotlin.time.ExperimentalTime::class)
                 var assistantMsg = ChatItem(
                     id = Uuid.random().toString(),
+                    userId = currentUser.currentUserId,
                     conversationId = convId,
                     content = "",
                     type = ChatItemType.Answer,

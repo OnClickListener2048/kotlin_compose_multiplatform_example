@@ -3,12 +3,14 @@ package org.example.project.repo
 import com.watson.database.sqldelight.WatsonQueries
 import org.example.project.bean.ChatItemType
 import org.example.project.bean.MessageContentType
+import org.example.project.feature.user.CurrentUserProvider
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
 import kotlin.uuid.ExperimentalUuidApi
 
 data class Conversation(
     val id: String,
+    val userId: String,
     val title: String,
     val workspaceId: String,
     val providerType: org.example.project.chat.ProviderType,
@@ -21,6 +23,7 @@ data class Conversation(
 
 data class ChatItem(
     val id: String,
+    val userId: String,
     val conversationId: String,
     val content: String,
     val type: ChatItemType,
@@ -30,7 +33,8 @@ data class ChatItem(
 )
 
 class ChatRepository(
-    private val queries: WatsonQueries
+    private val queries: WatsonQueries,
+    private val currentUser: CurrentUserProvider
 ) {
     @OptIn(kotlin.time.ExperimentalTime::class)
     private fun now() = Clock.System.now().toEpochMilliseconds()
@@ -38,7 +42,7 @@ class ChatRepository(
     @OptIn(ExperimentalUuidApi::class)
     fun createConversation(
         title: String = "New Chat",
-        workspaceId: String = "inbox",
+        workspaceId: String,
         providerType: org.example.project.chat.ProviderType,
         model: String = providerType.defaultModel
     ): Conversation {
@@ -46,6 +50,7 @@ class ChatRepository(
         val time = now()
         queries.insertConversation(
             id = id,
+            userId = currentUser.currentUserId,
             title = title,
             workspaceId = workspaceId,
             providerType = providerType,
@@ -55,54 +60,55 @@ class ChatRepository(
             isPinned = 0L,
             isArchived = 0L
         )
-        return Conversation(id, title, workspaceId, providerType, model, time, time, false, false)
+        return Conversation(id, currentUser.currentUserId, title, workspaceId, providerType, model, time, time, false, false)
     }
 
     fun getConversations(): List<Conversation> {
-        return queries.selectConversations().executeAsList().map { it.toConversation() }
+        return queries.selectConversations(currentUser.currentUserId).executeAsList().map { it.toConversation() }
     }
 
     fun getConversations(workspaceId: String): List<Conversation> {
-        return queries.selectConversationsForWorkspace(workspaceId).executeAsList().map { it.toConversation() }
+        return queries.selectConversationsForWorkspace(workspaceId, currentUser.currentUserId).executeAsList().map { it.toConversation() }
     }
 
     fun getArchivedConversations(): List<Conversation> {
-        return queries.selectArchivedConversations().executeAsList().map { it.toConversation() }
+        return queries.selectArchivedConversations(currentUser.currentUserId).executeAsList().map { it.toConversation() }
     }
 
     fun searchConversations(query: String): List<Conversation> {
-        return queries.searchConversations(query).executeAsList().map { it.toConversation() }
+        return queries.searchConversations(query, currentUser.currentUserId).executeAsList().map { it.toConversation() }
     }
 
     fun getConversationById(id: String): Conversation? {
-        return queries.selectConversationById(id).executeAsOneOrNull()?.toConversation()
+        return queries.selectConversationById(id, currentUser.currentUserId).executeAsOneOrNull()?.toConversation()
     }
 
     fun updateConversationTitle(id: String, title: String) {
-        queries.updateConversationTitle(id = id, title = title, updatedAt = now())
+        queries.updateConversationTitle(id = id, title = title, updatedAt = now(), userId = currentUser.currentUserId)
     }
 
     fun toggleConversationPin(id: String, isPinned: Boolean) {
-        queries.updateConversationPin(id = id, isPinned = if (isPinned) 1L else 0L, updatedAt = now())
+        queries.updateConversationPin(id = id, isPinned = if (isPinned) 1L else 0L, updatedAt = now(), userId = currentUser.currentUserId)
     }
 
     fun toggleConversationArchive(id: String, isArchived: Boolean) {
-        queries.updateConversationArchive(id = id, isArchived = if (isArchived) 1L else 0L, updatedAt = now())
+        queries.updateConversationArchive(id = id, isArchived = if (isArchived) 1L else 0L, updatedAt = now(), userId = currentUser.currentUserId)
     }
 
     fun deleteConversation(id: String) {
-        queries.deleteByConversationId(id)
-        queries.deleteConversation(id)
+        queries.deleteByConversationId(id, currentUser.currentUserId)
+        queries.deleteConversation(id, currentUser.currentUserId)
     }
 
     fun updateConversationTimestamp(id: String) {
-        queries.updateConversationUpdatedAt(id = id, updatedAt = now())
+        queries.updateConversationUpdatedAt(id = id, updatedAt = now(), userId = currentUser.currentUserId)
     }
 
     fun getMessages(conversationId: String): List<ChatItem> {
-        return queries.selectAllOrderedByTime(conversationId).executeAsList().map { row ->
+        return queries.selectAllOrderedByTime(conversationId, currentUser.currentUserId).executeAsList().map { row ->
             ChatItem(
                 id = row.id,
+                userId = row.userId,
                 conversationId = row.conversationId,
                 content = row.content,
                 type = row.type,
@@ -123,6 +129,7 @@ class ChatRepository(
         val time = now()
         queries.insertItem(
             id = id,
+            userId = currentUser.currentUserId,
             conversationId = conversationId,
             content = content,
             type = type,
@@ -130,24 +137,25 @@ class ChatRepository(
             createdAt = time
         )
         updateConversationTimestamp(conversationId)
-        return ChatItem(id, conversationId, content, type, contentType, time)
+        return ChatItem(id, currentUser.currentUserId, conversationId, content, type, contentType, time)
     }
 
     fun updateMessageContent(id: String, content: String) {
-        queries.updateContentById(content = content, id = id)
+        queries.updateContentById(content = content, id = id, userId = currentUser.currentUserId)
     }
 
     fun deleteMessage(id: String) {
-        queries.deleteById(id)
+        queries.deleteById(id, currentUser.currentUserId)
     }
 
     fun getMessageCount(conversationId: String): Int {
-        return queries.selectAllOrderedByTime(conversationId).executeAsList().size
+        return queries.selectAllOrderedByTime(conversationId, currentUser.currentUserId).executeAsList().size
     }
 }
 
 private fun com.watson.database.sqldelight.Conversation.toConversation() = Conversation(
     id = id,
+    userId = userId,
     title = title,
     workspaceId = workspaceId,
     providerType = providerType,

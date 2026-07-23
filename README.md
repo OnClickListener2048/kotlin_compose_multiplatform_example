@@ -33,7 +33,8 @@ The application UI is Compose Multiplatform. SQLDelight drivers and Ktor engines
 | Module | Current implementation | Status |
 | --- | --- | --- |
 | `core` | `ChatItemType`, `MessageContentType`, provider types, and shared chat primitives. | Implemented |
-| `database` | SQLDelight schema; Android, JVM, and iOS drivers; migrations through version 5. | Implemented |
+| `database` | SQLDelight schema; Android, JVM, and iOS drivers; migrations through version 6. | Implemented |
+| `feature-user` | Current-user abstraction, default local-user initialization, and data ownership boundary. | Implemented; login and account switching are pending |
 | `feature-chat` | Conversation/message repository: create, list, search, pin, archive, delete, persist and update messages. | Implemented |
 | `feature-prompt` | Ordered `ContextEngine`, system/template/workspace/memory/file/history providers, and prompt-template persistence. | Implemented; no template-management screen yet |
 | `feature-memory` | Global/workspace/conversation memory storage and recall; model-backed summary service at 500 messages. | Implemented; no semantic search or memory-management UI |
@@ -113,7 +114,7 @@ There is no embedding generation, vector database, semantic recall, deduplicatio
 composeApp (Compose UI, Decompose root, responsive screens)
         │
         ├── shared (temporary Koin wiring and platform bootstrap)
-        │      ├── feature-chat / feature-model / feature-prompt
+        │      ├── feature-user / feature-chat / feature-model / feature-prompt
         │      ├── feature-memory / feature-files / feature-workspace
         │      └── feature-settings
         │
@@ -137,7 +138,7 @@ Android's app name remains in Android resources under `composeApp/src/androidMai
 
 ## Persistence
 
-SQLDelight stores conversations, messages, provider configurations, workspaces, memory entries, prompt templates, file assets, and app settings. Desktop stores the database at `~/.fatai/app.db` and copies a legacy `~/.ai-assistant/app.db` on first launch when available. Android and iOS use their platform SQLDelight drivers.
+SQLDelight stores users, conversations, messages, provider configurations, workspaces, memory entries, prompt templates, file assets, and app settings. Every business record carries a `userId`, and repository reads and writes are filtered by the current user. Startup creates the `local-default` local user and migration assigns existing data to it; a future login flow only needs to replace the `CurrentUserProvider` implementation. Desktop stores the database at `~/.fatai/app.db` and copies a legacy `~/.ai-assistant/app.db` on first launch when available. Android and iOS use their platform SQLDelight drivers.
 
 ## Build and run
 

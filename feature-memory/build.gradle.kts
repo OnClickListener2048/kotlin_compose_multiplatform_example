@@ -10,6 +10,7 @@ kotlin {
             implementation(project(":core"))
             implementation(project(":database"))
             implementation(project(":feature-model"))
+            implementation(project(":feature-user"))
             implementation(libs.ktor.client.core)
         }
     }

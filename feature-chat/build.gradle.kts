@@ -14,6 +14,7 @@ kotlin {
             implementation(project(":feature-memory"))
             implementation(project(":feature-workspace"))
             implementation(project(":feature-files"))
+            implementation(project(":feature-user"))
         }
     }
 }

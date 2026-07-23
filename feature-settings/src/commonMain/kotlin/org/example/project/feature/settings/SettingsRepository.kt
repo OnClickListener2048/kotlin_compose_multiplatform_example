@@ -1,6 +1,7 @@
 package org.example.project.feature.settings
 
 import com.watson.database.sqldelight.WatsonQueries
+import org.example.project.feature.user.CurrentUserProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -8,17 +9,17 @@ import kotlin.time.Clock
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
-class SettingsRepository(private val queries: WatsonQueries) {
+class SettingsRepository(private val queries: WatsonQueries, private val currentUser: CurrentUserProvider) {
     private val _themeMode = MutableStateFlow(readThemeMode())
     val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
 
     fun setThemeMode(mode: ThemeMode) {
-        queries.upsertAppSetting(THEME_MODE_KEY, mode.name, now())
+        queries.upsertAppSetting(currentUser.currentUserId, THEME_MODE_KEY, mode.name, now())
         _themeMode.value = mode
     }
 
     private fun readThemeMode(): ThemeMode =
-        queries.selectAppSetting(THEME_MODE_KEY).executeAsOneOrNull()
+        queries.selectAppSetting(currentUser.currentUserId, THEME_MODE_KEY).executeAsOneOrNull()
             ?.value_
             ?.let { value -> ThemeMode.entries.firstOrNull { it.name == value } }
             ?: ThemeMode.SYSTEM
