@@ -60,8 +60,9 @@ The project includes all planned feature modules, but Knowledge, Tools, and Agen
 - A streaming “Thinking…” indicator.
 - Assistant Markdown rendering with GFM tables, links, code blocks, and mobile-oriented typography.
 - Decompose stack navigation between Chat and Settings.
-- System, light, and dark themes persisted in `AppSetting`.
+- System, light, and dark themes persisted in `AppSetting`, selected through a dialog with an explicit selected state.
 - English and Chinese Compose resources selected from the system locale.
+- When no API key exists, the app blocks chat and guides the user to Settings; the sidebar footer shows the current user's avatar and name.
 
 ### Files and multimodal message presentation
 

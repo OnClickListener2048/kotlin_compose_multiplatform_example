@@ -34,6 +34,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,8 +65,9 @@ class AISettingsScreen {
         val apiKeyRepo = koinInject<ApiKeyRepository>()
         val settingsRepo = koinInject<SettingsRepository>()
         var keys by remember { mutableStateOf(apiKeyRepo.getAllKeys()) }
-        var themeMode by remember { mutableStateOf(settingsRepo.themeMode.value) }
-        var showAddDialog by remember { mutableStateOf(false) }
+        val themeMode by settingsRepo.themeMode.collectAsState()
+        var showThemeDialog by remember { mutableStateOf(false) }
+        var showAddDialog by remember { mutableStateOf(keys.isEmpty()) }
         var showDeleteDialog by remember { mutableStateOf<ApiKeyInfo?>(null) }
 
         fun refresh() {
@@ -97,34 +99,24 @@ class AISettingsScreen {
                 Text(stringResource(Res.string.appearance), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().clickable { showThemeDialog = true },
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Text(stringResource(Res.string.theme), fontWeight = FontWeight.Medium)
-                        Spacer(Modifier.height(6.dp))
-                        Row {
-                            ThemeMode.entries.forEach { mode ->
-                                TextButton(
-                                    onClick = {
-                                        themeMode = mode
-                                        settingsRepo.setThemeMode(mode)
-                                    },
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text(
-                                        text = when (mode) {
-                                            ThemeMode.SYSTEM -> stringResource(Res.string.system)
-                                            ThemeMode.LIGHT -> stringResource(Res.string.light)
-                                            ThemeMode.DARK -> stringResource(Res.string.dark)
-                                        },
-                                        color = if (themeMode == mode) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(14.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(stringResource(Res.string.theme), fontWeight = FontWeight.Medium)
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                themeModeLabel(themeMode),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
+                        Text("›", style = MaterialTheme.typography.headlineSmall)
                     }
                 }
 
@@ -239,7 +231,65 @@ class AISettingsScreen {
                 }
             )
         }
+
+        if (showThemeDialog) {
+            ThemeSelectionDialog(
+                selectedMode = themeMode,
+                onDismiss = { showThemeDialog = false },
+                onSelect = { mode -> settingsRepo.setThemeMode(mode) }
+            )
+        }
     }
+}
+
+@Composable
+private fun ThemeSelectionDialog(
+    selectedMode: ThemeMode,
+    onDismiss: () -> Unit,
+    onSelect: (ThemeMode) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.theme)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ThemeMode.entries.forEach { mode ->
+                    val selected = mode == selectedMode
+                    Card(
+                        modifier = Modifier.fillMaxWidth().clickable {
+                            onSelect(mode)
+                            onDismiss()
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer
+                            else MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                        ) {
+                            Text(themeModeLabel(mode), modifier = Modifier.weight(1f))
+                            if (selected) {
+                                Text("✓", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+        }
+    )
+}
+
+@Composable
+private fun themeModeLabel(mode: ThemeMode): String = when (mode) {
+    ThemeMode.SYSTEM -> stringResource(Res.string.system)
+    ThemeMode.LIGHT -> stringResource(Res.string.light)
+    ThemeMode.DARK -> stringResource(Res.string.dark)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

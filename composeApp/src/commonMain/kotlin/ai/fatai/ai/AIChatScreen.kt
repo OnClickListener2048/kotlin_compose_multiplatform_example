@@ -75,6 +75,9 @@ import ai.fatai.bean.MessageContentType
 import ai.fatai.repo.Conversation
 import ai.fatai.feature.workspace.Workspace
 import ai.fatai.feature.files.FileAsset
+import ai.fatai.feature.user.User
+import ai.fatai.feature.user.UserRepository
+import ai.fatai.repo.ApiKeyRepository
 import ai.fatai.viewmodel.AIChatViewModel
 import fatai.composeapp.generated.resources.Res
 import fatai.composeapp.generated.resources.*
@@ -105,7 +108,11 @@ class AIChatScreen {
     @Composable
     fun Content(onSettings: () -> Unit) {
         val viewModel = koinInject<AIChatViewModel>()
+        val apiKeyRepository = koinInject<ApiKeyRepository>()
+        val userRepository = koinInject<UserRepository>()
+        val user = remember { userRepository.currentUser() }
         var state by remember { mutableStateOf(viewModel.state.value) }
+        var showApiKeyGuide by remember { mutableStateOf(apiKeyRepository.getAllKeys().isEmpty()) }
 
         LaunchedEffect(viewModel) {
             viewModel.state.collect { state = it }
@@ -146,6 +153,7 @@ class AIChatScreen {
         fun Sidebar(closeAfterAction: Boolean) {
             ConversationSidebar(
                 conversations = state.conversations.filter { !it.isArchived },
+                user = user,
                 workspaces = state.workspaces,
                 currentWorkspaceId = state.currentWorkspaceId,
                 currentId = state.currentConversationId,
@@ -286,7 +294,28 @@ class AIChatScreen {
                 }
             }
         }
+
+        if (showApiKeyGuide) {
+            ApiKeySetupDialog(
+                onConfigure = {
+                    showApiKeyGuide = false
+                    onSettings()
+                }
+            )
+        }
     }
+}
+
+@Composable
+private fun ApiKeySetupDialog(onConfigure: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = {},
+        title = { Text(stringResource(Res.string.add_api_key)) },
+        text = { Text(stringResource(Res.string.add_api_key_description)) },
+        confirmButton = {
+            Button(onClick = onConfigure) { Text(stringResource(Res.string.add_key)) }
+        }
+    )
 }
 
 @Composable
@@ -328,6 +357,7 @@ private fun WelcomeScreen(onNewChat: () -> Unit, providerName: String) {
 @Composable
 private fun ConversationSidebar(
     conversations: List<Conversation>,
+    user: User,
     workspaces: List<Workspace>,
     currentWorkspaceId: String,
     currentId: String?,
@@ -478,6 +508,39 @@ private fun ConversationSidebar(
                         }
                     }
                 }
+            }
+        }
+
+        HorizontalDivider()
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(12.dp).clickable(onClick = onSettings),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = user.name.firstOrNull()?.uppercase() ?: "U",
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(Modifier.width(10.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(user.name, fontWeight = FontWeight.Medium, maxLines = 1)
+                    Text(
+                        stringResource(Res.string.user_account),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(FeatherIcons.Settings, contentDescription = stringResource(Res.string.settings), modifier = Modifier.size(18.dp))
             }
         }
 

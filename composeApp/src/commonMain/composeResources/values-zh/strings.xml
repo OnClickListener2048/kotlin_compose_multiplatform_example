@@ -41,6 +41,7 @@
     <string name="delete_key_confirmation">确定删除“%1$s”吗？此操作无法撤销。</string>
     <string name="add_api_key">添加 API 密钥</string>
     <string name="add_api_key_description">连接模型提供商后即可开始聊天。</string>
+    <string name="user_account">用户账号</string>
     <string name="provider">提供商</string>
     <string name="display_name">显示名称</string>
     <string name="api_key">API 密钥</string>

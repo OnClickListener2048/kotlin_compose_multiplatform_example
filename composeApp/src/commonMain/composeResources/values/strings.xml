@@ -41,6 +41,7 @@
     <string name="delete_key_confirmation">Delete "%1$s"? This cannot be undone.</string>
     <string name="add_api_key">Add API Key</string>
     <string name="add_api_key_description">Connect a model provider to start chatting.</string>
+    <string name="user_account">User account</string>
     <string name="provider">Provider</string>
     <string name="display_name">Display Name</string>
     <string name="api_key">API Key</string>
