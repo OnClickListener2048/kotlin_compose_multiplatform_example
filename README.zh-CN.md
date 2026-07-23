@@ -33,7 +33,7 @@ FatAI 是一个仍在持续建设中的 AI Assistant。项目采用 KMP Feature 
 | 模块 | 当前实现 | 状态 |
 | --- | --- | --- |
 | `core` | `ChatItemType`、`MessageContentType`、Provider 类型和聊天基础模型。 | 已实现 |
-| `database` | SQLDelight Schema、Android/JVM/iOS Driver，以及截至版本 6 的迁移。 | 已实现 |
+| `database` | SQLDelight Schema、Android/JVM/iOS Driver，以及截至版本 7 的迁移。 | 已实现 |
 | `feature-user` | 当前用户抽象、默认本地用户初始化与数据归属边界。 | 已实现；登录与账号切换待接入 |
 | `feature-chat` | 会话与消息仓库：创建、列表、搜索、置顶、归档、删除、消息持久化与更新。 | 已实现 |
 | `feature-prompt` | 有序 `ContextEngine`、系统/模板/工作区/记忆/文件/历史 Provider，以及 Prompt Template 持久化。 | 已实现；暂无模板管理页面 |
@@ -55,7 +55,7 @@ Knowledge、Tools、Agent 模块已经被纳入项目结构，但当前没有领
 ### Chat 与界面
 
 - Open WebUI 风格的响应式布局：桌面端固定侧栏，移动端抽屉导航。
-- 会话创建、搜索、置顶、归档、删除，以及首条消息自动生成标题。
+- 会话创建、搜索、置顶、归档、删除、首条消息自动生成标题；进入聊天页时会恢复最近一次保存的会话。
 - SSE 流式回复、停止生成、重新生成与续写。
 - 流式请求期间显示带动画的“正在思考”。
 - 助手 Markdown 渲染：GFM 表格、链接、代码块，以及面向手机的字号。

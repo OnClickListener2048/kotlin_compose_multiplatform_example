@@ -74,18 +74,37 @@ class AIChatViewModel(
     private var shouldStopStream = false
 
     init {
+        refresh()
+    }
+
+    /**
+     * Rehydrates the chat screen from persistent storage.
+     *
+     * The desktop screen can be recreated while this Koin singleton remains alive, so loading
+     * only during construction is not enough to guarantee that saved conversations reappear.
+     */
+    fun refresh() {
         val inbox = workspaceRepository.ensureInbox()
-        _state.value = _state.value.copy(currentWorkspaceId = inbox.id)
-        loadWorkspaces()
-        loadConversations()
+        val workspaceId = _state.value.currentWorkspaceId
+            .takeIf { workspaceRepository.getById(it) != null }
+            ?: inbox.id
+        val conversations = chatRepository.getConversations(workspaceId)
+        val selectedConversationId = _state.value.currentConversationId
+            ?.takeIf { selectedId -> conversations.any { it.id == selectedId } }
+            ?: conversations.maxByOrNull { it.updatedAt }?.id
+
+        _state.value = _state.value.copy(
+            conversations = conversations,
+            workspaces = workspaceRepository.getAll(),
+            currentWorkspaceId = workspaceId,
+            currentConversationId = selectedConversationId,
+            messages = emptyList(),
+            attachments = emptyList(),
+            messageAttachments = emptyMap(),
+            inputText = ""
+        )
         loadActiveConfig()
-        val conversations = _state.value.conversations
-        if (conversations.isNotEmpty()) {
-            val lastConv = conversations.maxByOrNull { it.updatedAt }
-            if (lastConv != null) {
-                selectConversation(lastConv.id)
-            }
-        }
+        selectedConversationId?.let(::selectConversation)
     }
 
     fun loadConversations() {

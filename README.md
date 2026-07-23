@@ -33,7 +33,7 @@ The application UI is Compose Multiplatform. SQLDelight drivers and Ktor engines
 | Module | Current implementation | Status |
 | --- | --- | --- |
 | `core` | `ChatItemType`, `MessageContentType`, provider types, and shared chat primitives. | Implemented |
-| `database` | SQLDelight schema; Android, JVM, and iOS drivers; migrations through version 6. | Implemented |
+| `database` | SQLDelight schema; Android, JVM, and iOS drivers; migrations through version 7. | Implemented |
 | `feature-user` | Current-user abstraction, default local-user initialization, and data ownership boundary. | Implemented; login and account switching are pending |
 | `feature-chat` | Conversation/message repository: create, list, search, pin, archive, delete, persist and update messages. | Implemented |
 | `feature-prompt` | Ordered `ContextEngine`, system/template/workspace/memory/file/history providers, and prompt-template persistence. | Implemented; no template-management screen yet |
@@ -55,7 +55,7 @@ The project includes all planned feature modules, but Knowledge, Tools, and Agen
 ### Chat and UI
 
 - Responsive Open WebUI-inspired layout: fixed desktop sidebar and mobile navigation drawer.
-- Conversation create, search, pin, archive, delete, and automatic first-message title.
+- Conversation create, search, pin, archive, delete, automatic first-message title, and restoration of the latest saved conversation when the chat screen opens.
 - SSE streaming, stop generation, regenerate, and continue generation.
 - A streaming “Thinking…” indicator.
 - Assistant Markdown rendering with GFM tables, links, code blocks, and mobile-oriented typography.

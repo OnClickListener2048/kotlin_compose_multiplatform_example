@@ -115,6 +115,7 @@ class AIChatScreen {
         var showApiKeyGuide by remember { mutableStateOf(apiKeyRepository.getAllKeys().isEmpty()) }
 
         LaunchedEffect(viewModel) {
+            viewModel.refresh()
             viewModel.state.collect { state = it }
         }
         val drawerState = rememberDrawerState(DrawerValue.Closed)
