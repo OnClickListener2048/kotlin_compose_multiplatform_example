@@ -76,7 +76,7 @@ Knowledge、Tools、Agent 模块已经被纳入项目结构，但当前没有领
 ### 模型访问
 
 - 添加、激活、删除 API Key 配置，并设置 Provider、Base URL、Model。
-- 当前激活的配置用于流式聊天请求。
+- 当前激活的配置用于流式聊天请求；新增或切换密钥后，无需重启应用即可新建会话。
 - 已实现的传输层使用 OpenAI Chat Completions SSE 形状：`POST {baseUrl}/chat/completions`。
 
 当 Endpoint 兼容 OpenAI Chat Completions 时，可配置 OpenAI、DeepSeek、OpenRouter、Ollama 和 Custom。Gemini、Claude 当前仅出现在 Provider 下拉选择中作为配置预设；专用 Gemini/Anthropic Adapter 尚未实现，因此并不支持它们的原生 API。API Key 当前保存在本地 SQLDelight 数据库，尚未接入各平台的安全密钥存储。

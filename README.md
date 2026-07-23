@@ -76,7 +76,7 @@ Attachments are currently represented in the model context as a file manifest (n
 ### Model access
 
 - Add, activate, and delete API-key configurations with provider, base URL, and model fields.
-- The active configuration is used for streaming chat requests.
+- The active configuration is used for streaming chat requests; new or newly selected keys can start conversations without restarting the app.
 - The implemented transport calls the OpenAI Chat Completions SSE shape: `POST {baseUrl}/chat/completions`.
 
 OpenAI, DeepSeek, OpenRouter, Ollama, and Custom can be configured when their endpoint is OpenAI-compatible. Gemini and Claude currently appear in the provider selector only as configuration presets; dedicated Gemini and Anthropic adapters have **not** been implemented, so those native APIs are not supported yet. API keys are stored in the local SQLDelight database; secure platform key storage is still pending.

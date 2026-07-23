@@ -132,16 +132,16 @@ class AIChatViewModel(
 
     private fun loadActiveConfig() {
         val activeKey = apiKeyRepository.getActiveKey()
-        if (activeKey != null) {
-            _state.value = _state.value.copy(
-                activeProvider = activeKey.providerType,
-                activeConfig = ProviderConfig(
-                    apiKey = activeKey.apiKey,
-                    baseUrl = activeKey.baseUrl.ifBlank { activeKey.providerType.defaultBaseUrl },
-                    model = activeKey.model.ifBlank { activeKey.providerType.defaultModel }
+        _state.value = _state.value.copy(
+            activeProvider = activeKey?.providerType ?: ProviderType.OpenAI,
+            activeConfig = activeKey?.let { key ->
+                ProviderConfig(
+                    apiKey = key.apiKey,
+                    baseUrl = key.baseUrl.ifBlank { key.providerType.defaultBaseUrl },
+                    model = key.model.ifBlank { key.providerType.defaultModel }
                 )
-            )
-        }
+            }
+        )
     }
 
     fun updateInputText(text: String) {
@@ -161,6 +161,7 @@ class AIChatViewModel(
     }
 
     fun newConversation() {
+        loadActiveConfig()
         val config = _state.value.activeConfig ?: run {
             screenModelScope.launch { _toastEvents.emit("Please configure an API key first") }
             return
