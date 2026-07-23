@@ -68,7 +68,7 @@ class ChatRepository(
     }
 
     fun getConversations(workspaceId: String): List<Conversation> {
-        return queries.selectConversationsForWorkspace(workspaceId, currentUser.currentUserId).executeAsList().map { it.toConversation() }
+        return queries.selectConversationsForWorkspace(currentUser.currentUserId, workspaceId).executeAsList().map { it.toConversation() }
     }
 
     fun getArchivedConversations(): List<Conversation> {

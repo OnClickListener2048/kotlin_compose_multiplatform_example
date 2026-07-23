@@ -55,7 +55,7 @@ The project includes all planned feature modules, but Knowledge, Tools, and Agen
 ### Chat and UI
 
 - Responsive Open WebUI-inspired layout: fixed desktop sidebar and mobile navigation drawer.
-- Conversation create, search, pin, archive, delete, automatic first-message title, and restoration of the latest saved conversation when the chat screen opens.
+- Conversation create, search, pin, archive, delete, automatic first-message title, and restoration of the latest saved conversation and messages when the chat screen opens.
 - SSE streaming, stop generation, regenerate, and continue generation.
 - A streaming “Thinking…” indicator.
 - Assistant Markdown rendering with GFM tables, links, code blocks, and mobile-oriented typography.
