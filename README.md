@@ -86,16 +86,16 @@ OpenAI, DeepSeek, OpenRouter, Ollama, and Custom can be configured when their en
 Every outgoing chat request is assembled by `feature-prompt` in deterministic order:
 
 ```text
-System prompt
+FatAI baseline policy (role, instruction order, uncertainty, and capability boundaries)
   → enabled prompt templates
   → current workspace instruction
-  → recalled memory
-  → conversation file manifest
+  → recalled memory reference
+  → conversation file-metadata reference
   → most recent 20 chat messages
   → OpenAI-compatible model gateway
 ```
 
-`PromptProvider` is the extension point. A future RAG provider, MCP tool-result provider, or agent state provider can join the pipeline without coupling itself to the chat screen.
+`PromptProvider` is the extension point. The baseline policy treats conversation history, memories, file metadata, quoted text, and retrieved material as reference data, so they cannot replace application or workspace instructions. A future RAG provider, MCP tool-result provider, or agent state provider can join the pipeline without coupling itself to the chat screen.
 
 ### Memory
 

@@ -86,16 +86,16 @@ Knowledge、Tools、Agent 模块已经被纳入项目结构，但当前没有领
 每次发送聊天请求时，`feature-prompt` 会按照固定顺序组装上下文：
 
 ```text
-系统提示词
+FatAI 基线策略（角色、指令优先级、不确定性与能力边界）
   → 已启用的 Prompt Template
   → 当前工作区指令
-  → 召回的记忆
-  → 当前会话的文件清单
+  → 召回的记忆参考数据
+  → 当前会话的文件元数据参考数据
   → 最近 20 条聊天记录
   → OpenAI-compatible Model Gateway
 ```
 
-`PromptProvider` 是扩展点。后续的 RAG、MCP 工具结果或 Agent State 都可以以 Provider 的形式接入，无需和聊天页面直接耦合。
+`PromptProvider` 是扩展点。基线策略会将聊天历史、记忆、文件元数据、引用文本与检索结果视为参考数据，不能借此覆盖应用或工作区指令。后续的 RAG、MCP 工具结果或 Agent State 都可以以 Provider 的形式接入，无需和聊天页面直接耦合。
 
 ### Memory
 
