@@ -31,7 +31,7 @@ kotlin {
 }
 
 android {
-    namespace = "org.example.project.feature.model"
+    namespace = "ai.fatai.feature.model"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig { minSdk = libs.versions.android.minSdk.get().toInt() }
 }

@@ -16,4 +16,4 @@ kotlin {
     }
 }
 
-android { namespace = "org.example.project.feature.memory"; compileSdk = libs.versions.android.compileSdk.get().toInt(); defaultConfig { minSdk = libs.versions.android.minSdk.get().toInt() } }
+android { namespace = "ai.fatai.feature.memory"; compileSdk = libs.versions.android.compileSdk.get().toInt(); defaultConfig { minSdk = libs.versions.android.minSdk.get().toInt() } }

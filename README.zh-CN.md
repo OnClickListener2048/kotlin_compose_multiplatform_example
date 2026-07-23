@@ -110,6 +110,8 @@ Knowledge、Tools、Agent 模块已经被纳入项目结构，但当前没有领
 
 ## 架构
 
+项目的 Kotlin 包命名空间与 Android module namespace 统一为 `ai.fatai`；Android applicationId 和 iOS bundle identifier 使用 `ai.fatai.app`。发布前请按组织实际拥有的域名调整该标识。
+
 ```text
 composeApp（Compose UI、Decompose 根路由、响应式页面）
         │

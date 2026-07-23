@@ -8,4 +8,4 @@ kotlin {
     sourceSets { commonMain.dependencies { implementation(project(":core")); implementation(project(":database")) } }
 }
 
-android { namespace = "org.example.project.feature.user"; compileSdk = libs.versions.android.compileSdk.get().toInt(); defaultConfig { minSdk = libs.versions.android.minSdk.get().toInt() } }
+android { namespace = "ai.fatai.feature.user"; compileSdk = libs.versions.android.compileSdk.get().toInt(); defaultConfig { minSdk = libs.versions.android.minSdk.get().toInt() } }

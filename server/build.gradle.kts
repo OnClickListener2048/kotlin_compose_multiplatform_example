@@ -4,10 +4,10 @@ plugins {
     application
 }
 
-group = "org.example.project"
+group = "ai.fatai"
 version = "1.0.0"
 application {
-    mainClass.set("org.example.project.ApplicationKt")
+    mainClass.set("ai.fatai.ApplicationKt")
     
     val isDevelopment: Boolean = project.ext.has("development")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")

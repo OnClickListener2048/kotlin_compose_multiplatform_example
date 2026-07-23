@@ -110,6 +110,8 @@ There is no embedding generation, vector database, semantic recall, deduplicatio
 
 ## Architecture
 
+The Kotlin package namespace and Android module namespaces are standardized on `ai.fatai`; the Android application ID and iOS bundle identifier use `ai.fatai.app`. Replace these identifiers with a domain owned by your organization before publishing.
+
 ```text
 composeApp (Compose UI, Decompose root, responsive screens)
         │

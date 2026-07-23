@@ -19,4 +19,4 @@ kotlin {
     }
 }
 
-android { namespace = "org.example.project.feature.chat"; compileSdk = libs.versions.android.compileSdk.get().toInt(); defaultConfig { minSdk = libs.versions.android.minSdk.get().toInt() } }
+android { namespace = "ai.fatai.feature.chat"; compileSdk = libs.versions.android.compileSdk.get().toInt(); defaultConfig { minSdk = libs.versions.android.minSdk.get().toInt() } }

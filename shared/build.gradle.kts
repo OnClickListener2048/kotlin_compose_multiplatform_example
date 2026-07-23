@@ -67,7 +67,7 @@ kotlin {
 }
 
 android {
-    namespace = "org.example.project.shared"
+    namespace = "ai.fatai.shared"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

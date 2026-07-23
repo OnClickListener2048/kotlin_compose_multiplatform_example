@@ -18,4 +18,4 @@ kotlin {
     }
 }
 
-android { namespace = "org.example.project.feature.prompt"; compileSdk = libs.versions.android.compileSdk.get().toInt(); defaultConfig { minSdk = libs.versions.android.minSdk.get().toInt() } }
+android { namespace = "ai.fatai.feature.prompt"; compileSdk = libs.versions.android.compileSdk.get().toInt(); defaultConfig { minSdk = libs.versions.android.minSdk.get().toInt() } }
